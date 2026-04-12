@@ -18,7 +18,7 @@ Run the server JAR or execute `OCMultiServer.main()` from your IDE. The server l
 Run the desktop client using `./gradlew desktop:run` or execute `DesktopLauncher.main()` from your IDE.
 
 - Pass `true` as a program argument to connect to a local server.
-- Pass `false` or no argument to connect to the production server.
+- Omit the program argument to connect to the production server.
 
 ## Common Scenarios
 
@@ -61,7 +61,7 @@ Run the desktop client using `./gradlew desktop:run` or execute `DesktopLauncher
 
 ## Omega Chess Rules
 
-Omega Chess is played on a 10×10 board with four additional corner squares (12×12 total). In addition to the standard chess pieces, two new piece types are introduced:
+Omega Chess is played on a 10×10 playable board with four additional corner squares (104 playable squares total). The implementation represents this using a 12×12 grid that includes off-board/blank cells. In addition to the standard chess pieces, two new piece types are introduced:
 
 - **Champion** – Can move one or two squares orthogonally, or exactly two squares diagonally (jumping over pieces).
 - **Wizard** – Can move one square diagonally, or jump to a square that is one square orthogonal and two squares diagonal (an offset "L" shape, different from the knight).

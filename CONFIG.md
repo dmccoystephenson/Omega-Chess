@@ -42,12 +42,12 @@ org.gradle.configureondemand=false
 
 ### Server Connection
 
-The desktop client accepts a command-line argument to control which server it connects to.
+The desktop client accepts an optional command-line argument to control which server it connects to.
 
 **Argument:** First program argument passed to `DesktopLauncher.main()`
-**Type:** string (`true` or `false`)
-**Default:** `false` (connects to the production server)
-**Description:** Pass `true` to connect to a local server running on `localhost`. Pass `false` or omit the argument to connect to the production server.
+**Type:** string (`true`)
+**Default:** argument omitted (connects to the production server)
+**Description:** Pass `true` to connect to a local server running on `localhost`. To connect to the production server, omit the argument.
 
 ```
 # Connect to local server
@@ -67,3 +67,4 @@ The project is composed of the following Gradle modules, configured in `settings
 | `desktop` | Desktop launcher (LWJGL backend) |
 | `server` | Multi-threaded game server |
 | `ios` | iOS launcher (RoboVM backend) |
+| `tests` | Test module for project verification and automated checks |

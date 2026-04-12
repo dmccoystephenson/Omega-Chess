@@ -25,7 +25,7 @@ making any changes.
 - Server-side chess pieces extend `ChessPiece` in `com.omegaChess.pieces`.
 - Board logic is in `com.omegaChess.board`.
 - Server protocol handling is in `com.omegaChess.server.OCProtocol`.
-- Client-server communication uses JSON-style key-value messages via `OCMessage`.
+- Client-server communication uses comma-delimited `key=value` messages via `OCMessage`.
 
 ## Contribution Workflow
 
