@@ -1,0 +1,69 @@
+# Configuration Guide
+
+Omega Chess is configured primarily through Gradle build files and command-line arguments. This document describes the available configuration options.
+
+## Build Configuration
+
+Build settings are defined in `build.gradle` and `gradle.properties`.
+
+### gradle.properties
+
+#### org.gradle.daemon
+
+**Type:** boolean
+**Default:** `true`
+**Description:** Enables the Gradle daemon for faster builds.
+
+```properties
+org.gradle.daemon=true
+```
+
+#### org.gradle.jvmargs
+
+**Type:** string
+**Default:** `-Xms128m -Xmx1500m`
+**Description:** JVM arguments for the Gradle daemon. Adjust memory settings if you encounter out-of-memory errors during the build.
+
+```properties
+org.gradle.jvmargs=-Xms128m -Xmx1500m
+```
+
+#### org.gradle.configureondemand
+
+**Type:** boolean
+**Default:** `false`
+**Description:** When enabled, Gradle only configures projects that are relevant to the requested tasks.
+
+```properties
+org.gradle.configureondemand=false
+```
+
+## Desktop Client Configuration
+
+### Server Connection
+
+The desktop client accepts a command-line argument to control which server it connects to.
+
+**Argument:** First program argument passed to `DesktopLauncher.main()`
+**Type:** string (`true` or `false`)
+**Default:** `false` (connects to the production server)
+**Description:** Pass `true` to connect to a local server running on `localhost`. Pass `false` or omit the argument to connect to the production server.
+
+```
+# Connect to local server
+java -jar desktop.jar true
+
+# Connect to production server
+java -jar desktop.jar
+```
+
+## Project Modules
+
+The project is composed of the following Gradle modules, configured in `settings.gradle`:
+
+| Module | Description |
+|--------|-------------|
+| `core` | Shared game logic and libGDX screens |
+| `desktop` | Desktop launcher (LWJGL backend) |
+| `server` | Multi-threaded game server |
+| `ios` | iOS launcher (RoboVM backend) |
