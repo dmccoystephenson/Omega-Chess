@@ -1,0 +1,229 @@
+ASN_MODULE_SOURCES=	\
+	Nickname.c	\
+	Password.c	\
+	Email.c	\
+	MatchID.c	\
+	RowCol.c	\
+	SuccessFlag.c	\
+	FailureResponse.c	\
+	SquareRequest.c	\
+	SquareSuccessResponse.c	\
+	SquareResponse.c	\
+	RegisterRequest.c	\
+	RegisterResponse.c	\
+	SimpleSuccessResponse.c	\
+	UnregisterRequest.c	\
+	UnregisterResponse.c	\
+	LoginRequest.c	\
+	LoginResponse.c	\
+	GetProfileDataRequest.c	\
+	GetProfileDataResponse.c	\
+	ProfileDataSuccessResponse.c	\
+	SendInviteRequest.c	\
+	SendInviteResponse.c	\
+	InviteRecord.c	\
+	InviteList.c	\
+	GetInvitesSentRequest.c	\
+	GetInvitesReceivedRequest.c	\
+	InviteListResponse.c	\
+	InviteListSuccessResponse.c	\
+	GetNotificationsRequest.c	\
+	NotificationRecord.c	\
+	GetNotificationsResponse.c	\
+	NotificationsSuccessResponse.c	\
+	InviteResponseDecision.c	\
+	InviteResponseRequest.c	\
+	InviteResponseResponse.c	\
+	InviteResponseSuccessResponse.c	\
+	GetBoardDataRequest.c	\
+	PieceEntry.c	\
+	GetBoardDataResponse.c	\
+	BoardDataSuccessResponse.c	\
+	GetLegalMovesRequest.c	\
+	GetLegalMovesResponse.c	\
+	LegalMovesSuccessResponse.c	\
+	MatchMoveRequest.c	\
+	MatchMoveResponse.c	\
+	GetInProgressMatchesRequest.c	\
+	MatchSummary.c	\
+	GetInProgressMatchesResponse.c	\
+	InProgressMatchesSuccessResponse.c	\
+	GetTurnRequest.c	\
+	GetTurnResponse.c	\
+	TurnSuccessResponse.c	\
+	GetGameRecordsRequest.c	\
+	GameRecordEntry.c	\
+	GetGameRecordsResponse.c	\
+	GameRecordsSuccessResponse.c	\
+	EndMatchRequest.c	\
+	EndMatchResponse.c	\
+	EndMatchSuccessResponse.c	\
+	CheckCheckmateRequest.c	\
+	CheckCheckmateResponse.c	\
+	CheckmateSuccessResponse.c	\
+	CheckForfeitRequest.c	\
+	CheckForfeitResponse.c	\
+	ForfeitSuccessResponse.c	\
+	OmegaChessRequest.c	\
+	OmegaChessResponse.c
+
+ASN_MODULE_HEADERS=	\
+	Nickname.h	\
+	Password.h	\
+	Email.h	\
+	MatchID.h	\
+	RowCol.h	\
+	SuccessFlag.h	\
+	FailureResponse.h	\
+	SquareRequest.h	\
+	SquareSuccessResponse.h	\
+	SquareResponse.h	\
+	RegisterRequest.h	\
+	RegisterResponse.h	\
+	SimpleSuccessResponse.h	\
+	UnregisterRequest.h	\
+	UnregisterResponse.h	\
+	LoginRequest.h	\
+	LoginResponse.h	\
+	GetProfileDataRequest.h	\
+	GetProfileDataResponse.h	\
+	ProfileDataSuccessResponse.h	\
+	SendInviteRequest.h	\
+	SendInviteResponse.h	\
+	InviteRecord.h	\
+	InviteList.h	\
+	GetInvitesSentRequest.h	\
+	GetInvitesReceivedRequest.h	\
+	InviteListResponse.h	\
+	InviteListSuccessResponse.h	\
+	GetNotificationsRequest.h	\
+	NotificationRecord.h	\
+	GetNotificationsResponse.h	\
+	NotificationsSuccessResponse.h	\
+	InviteResponseDecision.h	\
+	InviteResponseRequest.h	\
+	InviteResponseResponse.h	\
+	InviteResponseSuccessResponse.h	\
+	GetBoardDataRequest.h	\
+	PieceEntry.h	\
+	GetBoardDataResponse.h	\
+	BoardDataSuccessResponse.h	\
+	GetLegalMovesRequest.h	\
+	GetLegalMovesResponse.h	\
+	LegalMovesSuccessResponse.h	\
+	MatchMoveRequest.h	\
+	MatchMoveResponse.h	\
+	GetInProgressMatchesRequest.h	\
+	MatchSummary.h	\
+	GetInProgressMatchesResponse.h	\
+	InProgressMatchesSuccessResponse.h	\
+	GetTurnRequest.h	\
+	GetTurnResponse.h	\
+	TurnSuccessResponse.h	\
+	GetGameRecordsRequest.h	\
+	GameRecordEntry.h	\
+	GetGameRecordsResponse.h	\
+	GameRecordsSuccessResponse.h	\
+	EndMatchRequest.h	\
+	EndMatchResponse.h	\
+	EndMatchSuccessResponse.h	\
+	CheckCheckmateRequest.h	\
+	CheckCheckmateResponse.h	\
+	CheckmateSuccessResponse.h	\
+	CheckForfeitRequest.h	\
+	CheckForfeitResponse.h	\
+	ForfeitSuccessResponse.h	\
+	OmegaChessRequest.h	\
+	OmegaChessResponse.h
+
+ASN_MODULE_HEADERS+=UTF8String.h
+ASN_MODULE_HEADERS+=BOOLEAN.h
+ASN_MODULE_SOURCES+=BOOLEAN.c
+ASN_MODULE_HEADERS+=INTEGER.h
+ASN_MODULE_HEADERS+=NativeEnumerated.h
+ASN_MODULE_SOURCES+=INTEGER.c
+ASN_MODULE_SOURCES+=NativeEnumerated.c
+ASN_MODULE_HEADERS+=NativeInteger.h
+ASN_MODULE_SOURCES+=NativeInteger.c
+ASN_MODULE_SOURCES+=UTF8String.c
+ASN_MODULE_HEADERS+=asn_SEQUENCE_OF.h
+ASN_MODULE_SOURCES+=asn_SEQUENCE_OF.c
+ASN_MODULE_HEADERS+=asn_SET_OF.h
+ASN_MODULE_SOURCES+=asn_SET_OF.c
+ASN_MODULE_HEADERS+=constr_CHOICE.h
+ASN_MODULE_SOURCES+=constr_CHOICE.c
+ASN_MODULE_HEADERS+=constr_SEQUENCE.h
+ASN_MODULE_SOURCES+=constr_SEQUENCE.c
+ASN_MODULE_HEADERS+=constr_SEQUENCE_OF.h
+ASN_MODULE_SOURCES+=constr_SEQUENCE_OF.c
+ASN_MODULE_HEADERS+=constr_SET_OF.h
+ASN_MODULE_SOURCES+=constr_SET_OF.c
+ASN_MODULE_HEADERS+=asn_application.h
+ASN_MODULE_HEADERS+=asn_system.h
+ASN_MODULE_HEADERS+=asn_codecs.h
+ASN_MODULE_HEADERS+=asn_internal.h
+ASN_MODULE_HEADERS+=OCTET_STRING.h
+ASN_MODULE_SOURCES+=OCTET_STRING.c
+ASN_MODULE_HEADERS+=BIT_STRING.h
+ASN_MODULE_SOURCES+=BIT_STRING.c
+ASN_MODULE_SOURCES+=asn_codecs_prim.c
+ASN_MODULE_HEADERS+=asn_codecs_prim.h
+ASN_MODULE_HEADERS+=ber_tlv_length.h
+ASN_MODULE_SOURCES+=ber_tlv_length.c
+ASN_MODULE_HEADERS+=ber_tlv_tag.h
+ASN_MODULE_SOURCES+=ber_tlv_tag.c
+ASN_MODULE_HEADERS+=ber_decoder.h
+ASN_MODULE_SOURCES+=ber_decoder.c
+ASN_MODULE_HEADERS+=der_encoder.h
+ASN_MODULE_SOURCES+=der_encoder.c
+ASN_MODULE_HEADERS+=constr_TYPE.h
+ASN_MODULE_SOURCES+=constr_TYPE.c
+ASN_MODULE_HEADERS+=constraints.h
+ASN_MODULE_SOURCES+=constraints.c
+ASN_MODULE_HEADERS+=xer_support.h
+ASN_MODULE_SOURCES+=xer_support.c
+ASN_MODULE_HEADERS+=xer_decoder.h
+ASN_MODULE_SOURCES+=xer_decoder.c
+ASN_MODULE_HEADERS+=xer_encoder.h
+ASN_MODULE_SOURCES+=xer_encoder.c
+ASN_MODULE_HEADERS+=per_support.h
+ASN_MODULE_SOURCES+=per_support.c
+ASN_MODULE_HEADERS+=per_decoder.h
+ASN_MODULE_SOURCES+=per_decoder.c
+ASN_MODULE_HEADERS+=per_encoder.h
+ASN_MODULE_SOURCES+=per_encoder.c
+ASN_MODULE_HEADERS+=per_opentype.h
+ASN_MODULE_SOURCES+=per_opentype.c
+ASN_CONVERTER_SOURCES+=converter-sample.c
+ASN_CONVERTER_SOURCES+=pdu_collection.c
+
+
+lib_LTLIBRARIES=libsomething.la
+libsomething_la_SOURCES=$(ASN_MODULE_SOURCES) $(ASN_MODULE_HEADERS)
+
+# This file may be used as an input for make(3)
+# Remove the lines below to convert it into a pure .am file
+TARGET = progname
+CFLAGS += -DASN_PDU_COLLECTION -I.
+OBJS=${ASN_MODULE_SOURCES:.c=.o} ${ASN_CONVERTER_SOURCES:.c=.o}
+
+all: $(TARGET)
+
+$(TARGET): ${OBJS}
+	$(CC) $(CFLAGS) -o $(TARGET) ${OBJS} $(LDFLAGS) $(LIBS)
+
+.SUFFIXES:
+.SUFFIXES: .c .o
+
+.c.o:
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+clean:
+	rm -f $(TARGET)
+	rm -f $(OBJS)
+
+regen: regenerate-from-asn1-source
+
+regenerate-from-asn1-source:
+	asn1c -fcompound-names -fincludes-quoted -pdu=all ../../omega-chess.asn
+
