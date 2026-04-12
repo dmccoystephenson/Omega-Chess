@@ -39,14 +39,14 @@ FROM eclipse-temurin:11-jre
 
 WORKDIR /app
 
-# Copy the server JAR
-COPY --from=build /app/server/build/libs/server-*.jar /app/lib/server.jar
+# Copy the server JAR (version from build.gradle)
+COPY --from=build /app/server/build/libs/server-1.0.jar /app/lib/server.jar
 
 # Copy the native codec library
 COPY --from=build /app/asn1/libasn1omega.so /app/lib/libasn1omega.so
 
-# Copy protocol JAR (server dependency)
-COPY --from=build /app/protocol/build/libs/protocol-*.jar /app/lib/protocol.jar
+# Copy protocol JAR (server dependency, version from build.gradle)
+COPY --from=build /app/protocol/build/libs/protocol-1.0.jar /app/lib/protocol.jar
 
 # Copy runtime dependency JARs
 COPY --from=build /app/deps/*.jar /app/lib/
