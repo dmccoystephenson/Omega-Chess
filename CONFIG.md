@@ -73,9 +73,13 @@ The project is composed of the following Gradle modules, configured in `settings
 ## Building the ASN.1 Codec (Optional)
 
 The protocol is formally defined in `omega-chess.asn` at the repository root. A
-pure-Java XER XML codec (`OCMessageFactory`) is included in the `protocol` module
-and is used at runtime. The steps below are only required if you wish to build the
-optional native C codec (`libasn1omega`) for production PER encoding.
+pure-Java UPER codec (`OCUperCodec`) is included in the `protocol` module and is
+used at runtime via `OCCodec`. Messages are UPER-encoded to binary, then
+Base64-encoded for TCP text-line transport.
+
+An XER XML codec (`OCMessageFactory`) is also available for debugging/logging
+purposes. The steps below are only required if you wish to build the optional
+native C codec (`libasn1omega`) from asn1c-generated sources.
 
 ### Prerequisites
 

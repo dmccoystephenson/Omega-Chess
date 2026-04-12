@@ -1,8 +1,8 @@
 # Commands Reference
 
-Omega Chess uses a client-server architecture. The desktop client communicates with the server via XER XML messages over a TCP socket connection (see `omega-chess.asn` for the formal schema and `OCMessageFactory` for the Java codec). Below is a reference of all supported server requests.
+Omega Chess uses a client-server architecture. The desktop client communicates with the server via UPER (Unaligned PER) encoded messages over a TCP socket connection (see `omega-chess.asn` for the formal schema and `OCCodec`/`OCUperCodec` for the Java codec). Messages are Base64-encoded for text-line transport. Below is a reference of all supported server requests.
 
-For full request/response message templates with XER XML examples, see [protocol.md](protocol.md).
+For full request/response message templates, see [protocol.md](protocol.md).
 
 ## Account Commands
 

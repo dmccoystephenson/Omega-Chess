@@ -1,12 +1,14 @@
 # Supported Server Requests
 
-All messages are encoded using XER (XML Encoding Rules) format, as defined by the
-ASN.1 schema in `omega-chess.asn`. Each message is a single-line XML document sent
-over TCP via `println()`/`readLine()`.
+All messages are encoded using UPER (Unaligned Packed Encoding Rules) as defined by
+the ASN.1 schema in `omega-chess.asn`. Each message is UPER-encoded to binary, then
+Base64-encoded for TCP text-line transport via `println()`/`readLine()`.
 
 **Design decision:** The `process` string field from the original key-value protocol
-has been removed. Message type is now implicit in the XML root element name, making
-it redundant.
+has been removed. Message type is now implicit in the CHOICE tag, making it redundant.
+
+The XER XML representations below are shown for documentation purposes; the actual
+wire format is compact UPER binary (Base64-encoded).
 
 ---
 

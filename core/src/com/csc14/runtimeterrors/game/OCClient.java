@@ -7,7 +7,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Arrays;
 
-import com.omegaChess.protocol.OCMessageFactory;
+import com.omegaChess.protocol.OCCodec;
 import com.omegaChess.protocol.Result;
 import com.omegaChess.protocol.messages.*;
 
@@ -38,7 +38,7 @@ public class OCClient {
     }
 
     private <S> Result<S> sendRequestAndReceive(Object request, Class<S> successType) {
-        String xml = OCMessageFactory.toXml(request);
+        String xml = OCCodec.encode(request);
         out.println(xml);
 
         String responseXml;
@@ -49,7 +49,7 @@ public class OCClient {
             return Result.fail(new FailureResponse("Communication error"));
         }
 
-        Object response = OCMessageFactory.fromXml(responseXml);
+        Object response = OCCodec.decode(responseXml);
         if (response instanceof FailureResponse) {
             return Result.fail((FailureResponse) response);
         }

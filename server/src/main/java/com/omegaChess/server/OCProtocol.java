@@ -5,7 +5,7 @@ import com.omegaChess.exceptions.IllegalMoveException;
 import com.omegaChess.exceptions.IllegalPositionException;
 import com.omegaChess.pieces.ChessPiece;
 import com.omegaChess.pieces.LegalMoves;
-import com.omegaChess.protocol.OCMessageFactory;
+import com.omegaChess.protocol.OCCodec;
 import com.omegaChess.protocol.messages.*;
 
 import java.util.ArrayList;
@@ -23,7 +23,7 @@ public class OCProtocol {
     public String processInput(String input) {
         String toReturn = "";
         try {
-            Object request = OCMessageFactory.fromXml(input);
+            Object request = OCCodec.decode(input);
 
             if (request instanceof SquareRequest) {
                 toReturn = squareInput((SquareRequest) request);
@@ -64,10 +64,10 @@ public class OCProtocol {
             } else if (request instanceof CheckForfeitRequest) {
                 toReturn = checkForfeit((CheckForfeitRequest) request);
             } else {
-                toReturn = OCMessageFactory.toXml(new FailureResponse("process not recognized"));
+                toReturn = OCCodec.encode(new FailureResponse("process not recognized"));
             }
         } catch (Exception e) {
-            toReturn = OCMessageFactory.toXml(new FailureResponse("Something went wrong when processing input."));
+            toReturn = OCCodec.encode(new FailureResponse("Something went wrong when processing input."));
             e.printStackTrace();
             System.out.println("Something went wrong when processing input.");
         }
@@ -83,7 +83,7 @@ public class OCProtocol {
         int square = number * number;
         System.out.println("Square: " + square);
 
-        return OCMessageFactory.toXml(new SquareSuccessResponse("Square of " + number + " is " + square));
+        return OCCodec.encode(new SquareSuccessResponse("Square of " + number + " is " + square));
     }
 
     private String registerUser(RegisterRequest request) {
@@ -98,11 +98,11 @@ public class OCProtocol {
 
         if (success) {
             System.out.println("Registered!");
-            return OCMessageFactory.toXml(new SimpleSuccessResponse());
+            return OCCodec.encode(new SimpleSuccessResponse());
         }
         else {
             System.out.println("Nickname or email was taken.");
-            return OCMessageFactory.toXml(new FailureResponse("nickname/email was taken"));
+            return OCCodec.encode(new FailureResponse("nickname/email was taken"));
         }
     }
 
@@ -161,11 +161,11 @@ public class OCProtocol {
 
         if (success) {
             System.out.println("Unregistered!");
-            return OCMessageFactory.toXml(new SimpleSuccessResponse());
+            return OCCodec.encode(new SimpleSuccessResponse());
         }
         else {
             System.out.println("Nickname wasn't found.");
-            return OCMessageFactory.toXml(new FailureResponse("nickname wasn't found"));
+            return OCCodec.encode(new FailureResponse("nickname wasn't found"));
         }
     }
 
@@ -179,18 +179,18 @@ public class OCProtocol {
         if (!serverData.profileExists(nickname)) {
             // profile doesn't exist
             System.out.println("Nickname wasn't found.");
-            return OCMessageFactory.toXml(new FailureResponse("nickname wasn't found"));
+            return OCCodec.encode(new FailureResponse("nickname wasn't found"));
         }
 
         Boolean success = serverData.checkPassword(nickname, password);
 
         if (success) {
             System.out.println("Logged in!");
-            return OCMessageFactory.toXml(new SimpleSuccessResponse());
+            return OCCodec.encode(new SimpleSuccessResponse());
         }
         else {
             System.out.println("Wrong password.");
-            return OCMessageFactory.toXml(new FailureResponse("wrong password"));
+            return OCCodec.encode(new FailureResponse("wrong password"));
         }
     }
 
@@ -203,7 +203,7 @@ public class OCProtocol {
         if (!serverData.profileExists(nickname)) {
             // profile doesn't exist
             System.out.println("Nickname wasn't found.");
-            return OCMessageFactory.toXml(new FailureResponse("nickname wasn't found"));
+            return OCCodec.encode(new FailureResponse("nickname wasn't found"));
         }
 
         ProfileDataSuccessResponse response = new ProfileDataSuccessResponse(
@@ -214,7 +214,7 @@ public class OCProtocol {
                 serverData.getProfile(nickname).getGamesTied()
         );
 
-        return OCMessageFactory.toXml(response);
+        return OCCodec.encode(response);
 
     }
 
@@ -226,7 +226,7 @@ public class OCProtocol {
         if (invitee.equalsIgnoreCase(inviter)){
             // Can't send invite to yourself
             System.out.println("Can't send an invite to yourself");
-            return OCMessageFactory.toXml(new FailureResponse("Can't send an invite to yourself"));
+            return OCCodec.encode(new FailureResponse("Can't send an invite to yourself"));
         }
 
        System.out.println("Attempting to send invite from " + inviter + " to " + invitee);
@@ -234,7 +234,7 @@ public class OCProtocol {
        if (!serverData.profileExists(invitee)){
            // Invitee doesn't exist
            System.out.println("Target user doesn't exist");
-           return OCMessageFactory.toXml(new FailureResponse("input user doesn't exist"));
+           return OCCodec.encode(new FailureResponse("input user doesn't exist"));
        }
 
        UserProfile player1 = serverData.getProfile(inviter);
@@ -242,16 +242,16 @@ public class OCProtocol {
        if (lookForMatch(inviter, invitee) != null){
            String reason = "Already in a match with " + invitee;
            System.out.println(reason);
-           return OCMessageFactory.toXml(new FailureResponse(reason));
+           return OCCodec.encode(new FailureResponse(reason));
        }
        if (lookForInvite(inviter, invitee, player1.getMailbox(), true) != null){
            String reason = "Already sent an invite to " + invitee;
            System.out.println(reason);
-           return OCMessageFactory.toXml(new FailureResponse(reason));
+           return OCCodec.encode(new FailureResponse(reason));
        }else if (lookForInvite(inviter, invitee, player1.getMailbox(), false) != null){
            String reason = "Already have an invite from " + inviter;
            System.out.println(reason);
-           return OCMessageFactory.toXml(new FailureResponse(reason));
+           return OCCodec.encode(new FailureResponse(reason));
        }
        Invite invite = new Invite(inviter, invitee);
        player1.getMailbox().addToSent(invite);
@@ -261,7 +261,7 @@ public class OCProtocol {
                ". Go to your mailbox to accept/decline this invite.");
 
        System.out.println("Invite has been sent");
-       return OCMessageFactory.toXml(new SimpleSuccessResponse());
+       return OCCodec.encode(new SimpleSuccessResponse());
 
    }
 
@@ -274,7 +274,7 @@ public class OCProtocol {
         if (!serverData.profileExists(user)){
             // target user doesn't exist
             System.out.println("Target user doesn't exist");
-            return OCMessageFactory.toXml(new FailureResponse("target user doesn't exist"));
+            return OCCodec.encode(new FailureResponse("target user doesn't exist"));
         }
 
         UserProfile profile = serverData.getProfile(user);
@@ -299,7 +299,7 @@ public class OCProtocol {
        );
 
        System.out.println("Recovered sent invites!");
-       return OCMessageFactory.toXml(response);
+       return OCCodec.encode(response);
    }
 
    private String getReceivedInvites(GetInvitesReceivedRequest request){
@@ -311,7 +311,7 @@ public class OCProtocol {
         if (!serverData.profileExists(user)){
             // target user doesn't exist
             System.out.println("Target user doesn't exist");
-            return OCMessageFactory.toXml(new FailureResponse("target user doesn't exist"));
+            return OCCodec.encode(new FailureResponse("target user doesn't exist"));
         }
 
         UserProfile profile = serverData.getProfile(user);
@@ -336,7 +336,7 @@ public class OCProtocol {
         );
 
        System.out.println("Recovered received invites!");
-       return OCMessageFactory.toXml(response);
+       return OCCodec.encode(response);
    }
 
    private String getNotifications(GetNotificationsRequest request) {
@@ -345,7 +345,7 @@ public class OCProtocol {
        if (!serverData.profileExists(user)){
            // target user doesn't exist
            System.out.println("Target user doesn't exist");
-           return OCMessageFactory.toXml(new FailureResponse("target user doesn't exist"));
+           return OCCodec.encode(new FailureResponse("target user doesn't exist"));
        }
 
        ArrayList<Notification> notifications = serverData.getProfile(user).getMailbox().getNotifications();
@@ -365,7 +365,7 @@ public class OCProtocol {
                notificationRecords
        );
 
-       return OCMessageFactory.toXml(response);
+       return OCCodec.encode(response);
    }
 
     private String inviteResponse(InviteResponseRequest request){
@@ -389,7 +389,7 @@ public class OCProtocol {
                         serverData.addMatch(match);
                         mail.addNotification(Notification.NotificationType.ACCEPTED_INVITE,
                                 invitee + " accepted your invite request. Go to the Resume Game screen to enter the match.");
-                        return OCMessageFactory.toXml(new InviteResponseSuccessResponse(true, Integer.toString(matchID)));
+                        return OCCodec.encode(new InviteResponseSuccessResponse(true, Integer.toString(matchID)));
                     }
                 }
             }
@@ -404,12 +404,12 @@ public class OCProtocol {
                         serverData.getProfile(invitee).getMailbox().removeFromReceived(inviteF);
                         mail.addNotification(Notification.NotificationType.DECLINED_INVITE,
                                 invitee + " declined your invite request.");
-                        return OCMessageFactory.toXml(new InviteResponseSuccessResponse(true, null));
+                        return OCCodec.encode(new InviteResponseSuccessResponse(true, null));
                     }
                 }
             }
         }
-        return OCMessageFactory.toXml(new InviteResponseSuccessResponse(true, null));
+        return OCCodec.encode(new InviteResponseSuccessResponse(true, null));
     }
 
     public String getBoardData(GetBoardDataRequest request){
@@ -419,7 +419,7 @@ public class OCProtocol {
 
         Match match = null;
         if (serverData.getMatches().size() == 0){
-            return OCMessageFactory.toXml(new FailureResponse("There are no matches available"));
+            return OCCodec.encode(new FailureResponse("There are no matches available"));
         }
         for (Match mat : serverData.getMatches()){
             if (mat.getMatchID() == ID) {
@@ -428,7 +428,7 @@ public class OCProtocol {
             }
         }
         if (match == null) {
-            return OCMessageFactory.toXml(new FailureResponse("No match found that has ID=" + ID));
+            return OCCodec.encode(new FailureResponse("No match found that has ID=" + ID));
         }
 
         List<PieceEntry> pieceList = new ArrayList<PieceEntry>();
@@ -439,7 +439,7 @@ public class OCProtocol {
             pieceList.add(new PieceEntry(piece.getPosition(), piece.toString()));
         }
 
-        return OCMessageFactory.toXml(new BoardDataSuccessResponse(true, pieceList));
+        return OCCodec.encode(new BoardDataSuccessResponse(true, pieceList));
     }
 
     private String getLegalMoves(GetLegalMovesRequest request) {
@@ -464,7 +464,7 @@ public class OCProtocol {
         // get legal moves for that piece
         LegalMoves moves;
         if (piece == null) {
-            return OCMessageFactory.toXml(new FailureResponse("no piece at specified position"));
+            return OCCodec.encode(new FailureResponse("no piece at specified position"));
         } else {
             moves = piece.getNormalOrCheckMoves();
         }
@@ -476,7 +476,7 @@ public class OCProtocol {
 
         System.out.println("Sending legal moves: " + legalMoves);
 
-        return OCMessageFactory.toXml(new LegalMovesSuccessResponse(true, legalMoves, moves.isEnPessant()));
+        return OCCodec.encode(new LegalMovesSuccessResponse(true, legalMoves, moves.isEnPessant()));
     }
 
     private String matchMove(MatchMoveRequest request) {
@@ -505,10 +505,10 @@ public class OCProtocol {
 
         if (moveMade) {
             System.out.println("Move was successful!");
-            return OCMessageFactory.toXml(new SimpleSuccessResponse());
+            return OCCodec.encode(new SimpleSuccessResponse());
         } else {
             System.out.println("Invalid move!");
-            return OCMessageFactory.toXml(new FailureResponse("invalid move"));
+            return OCCodec.encode(new FailureResponse("invalid move"));
         }
     }
 
@@ -530,7 +530,7 @@ public class OCProtocol {
             }
         }
 
-        return OCMessageFactory.toXml(new InProgressMatchesSuccessResponse(true, count, matchSummaries));
+        return OCCodec.encode(new InProgressMatchesSuccessResponse(true, count, matchSummaries));
     }
 
     public String getTurn(GetTurnRequest request){
@@ -538,7 +538,7 @@ public class OCProtocol {
 
         TurnTracker turn = null;
         if (serverData.getMatches().size() == 0){
-            return OCMessageFactory.toXml(new FailureResponse("There are no matches available"));
+            return OCCodec.encode(new FailureResponse("There are no matches available"));
         }
         for (Match match : serverData.getMatches()){
             if (match.getMatchID() == ID) {
@@ -547,10 +547,10 @@ public class OCProtocol {
             }
         }
         if (turn == null) {
-            return OCMessageFactory.toXml(new FailureResponse("No match found that has ID=" + ID));
+            return OCCodec.encode(new FailureResponse("No match found that has ID=" + ID));
         }
 
-        return OCMessageFactory.toXml(new TurnSuccessResponse(true, turn.getCurrentTurnPlayer(), turn.getCurrentTurnColor().toString()));
+        return OCCodec.encode(new TurnSuccessResponse(true, turn.getCurrentTurnPlayer(), turn.getCurrentTurnColor().toString()));
     }
 
     public String endMatch(EndMatchRequest request) {
@@ -561,7 +561,7 @@ public class OCProtocol {
 
         Match end = null;
         if (serverData.getMatches().size() == 0) {
-            return OCMessageFactory.toXml(new FailureResponse("There are no matches available"));
+            return OCCodec.encode(new FailureResponse("There are no matches available"));
         }
         for (Match match : serverData.getMatches()) {
             if (match.getMatchID() == ID) {
@@ -570,7 +570,7 @@ public class OCProtocol {
             }
         }
         if (end == null) {
-            return OCMessageFactory.toXml(new FailureResponse("there is no match with ID " + ID));
+            return OCCodec.encode(new FailureResponse("there is no match with ID " + ID));
         }
         if (end.isAcknowledgeEnd()) {
             moves = end.getBoard().getMoves().size();
@@ -580,11 +580,11 @@ public class OCProtocol {
             user.increment("gamesLost");
             serverData.addToArchive(end.endMatch(loser, winner, moves));
             serverData.removeMatch(end);
-            return OCMessageFactory.toXml(new EndMatchSuccessResponse(true, String.valueOf(serverData.getArchive().size())));
+            return OCCodec.encode(new EndMatchSuccessResponse(true, String.valueOf(serverData.getArchive().size())));
         }
         else {
             end.setAcknowledgeEnd(true);
-            return OCMessageFactory.toXml(new EndMatchSuccessResponse(true, null));
+            return OCCodec.encode(new EndMatchSuccessResponse(true, null));
         }
     }
 
@@ -622,7 +622,7 @@ public class OCProtocol {
         if (!serverData.profileExists(user)){
             // target user doesn't exist
             System.out.println("Target user doesn't exist");
-            return OCMessageFactory.toXml(new FailureResponse("target user doesn't exist"));
+            return OCCodec.encode(new FailureResponse("target user doesn't exist"));
         }
 
         List<GameRecordEntry> entries = new ArrayList<GameRecordEntry>();
@@ -657,7 +657,7 @@ public class OCProtocol {
             }
         }
 
-        return OCMessageFactory.toXml(new GameRecordsSuccessResponse(true, countForUser, entries));
+        return OCCodec.encode(new GameRecordsSuccessResponse(true, countForUser, entries));
     }
 
     private String checkCheckmate(CheckCheckmateRequest request) {
@@ -665,7 +665,7 @@ public class OCProtocol {
 
         Match match = null;
         if (serverData.getMatches().size() == 0){
-            return OCMessageFactory.toXml(new FailureResponse("There are no matches available"));
+            return OCCodec.encode(new FailureResponse("There are no matches available"));
         }
         for (Match m : serverData.getMatches()){
             if (m.getMatchID() == ID) {
@@ -674,7 +674,7 @@ public class OCProtocol {
             }
         }
         if (match == null){
-            return OCMessageFactory.toXml(new FailureResponse("there is no match with ID " + ID));
+            return OCCodec.encode(new FailureResponse("there is no match with ID " + ID));
         }
         String p1 = match.getProfile1();
         String p2 = match.getProfile2();
@@ -691,10 +691,10 @@ public class OCProtocol {
                 loser = p2;
                 winner = p1;
             }
-            return OCMessageFactory.toXml(new CheckmateSuccessResponse(true, true, loser, winner));
+            return OCCodec.encode(new CheckmateSuccessResponse(true, true, loser, winner));
         }
         else {
-            return OCMessageFactory.toXml(new CheckmateSuccessResponse(true, false, null, null));
+            return OCCodec.encode(new CheckmateSuccessResponse(true, false, null, null));
         }
     }
 
@@ -703,7 +703,7 @@ public class OCProtocol {
 
         Match match = null;
         if (serverData.getMatches().size() == 0){
-            return OCMessageFactory.toXml(new FailureResponse("There are no matches available"));
+            return OCCodec.encode(new FailureResponse("There are no matches available"));
         }
         for (Match m : serverData.getMatches()){
             if (m.getMatchID() == ID) {
@@ -712,9 +712,9 @@ public class OCProtocol {
             }
         }
         if (match == null){
-            return OCMessageFactory.toXml(new FailureResponse("there is no match with ID " + ID));
+            return OCCodec.encode(new FailureResponse("there is no match with ID " + ID));
         }
 
-        return OCMessageFactory.toXml(new ForfeitSuccessResponse(true, match.isAcknowledgeEnd()));
+        return OCCodec.encode(new ForfeitSuccessResponse(true, match.isAcknowledgeEnd()));
     }
 }

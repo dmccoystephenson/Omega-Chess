@@ -1,6 +1,6 @@
 package com.omegaChess;
 
-import com.omegaChess.protocol.OCMessageFactory;
+import com.omegaChess.protocol.OCCodec;
 import com.omegaChess.protocol.messages.*;
 import com.omegaChess.server.*;
 import org.junit.jupiter.api.DisplayName;
@@ -19,10 +19,10 @@ public class TestOCProtocol {
         OCServerData data = new OCServerData();
         OCProtocol protocol = new OCProtocol(data);
 
-        String input = OCMessageFactory.toXml(new SquareRequest(10));
+        String input = OCCodec.encode(new SquareRequest(10));
         String output = protocol.processInput(input);
 
-        Object response = OCMessageFactory.fromXml(output);
+        Object response = OCCodec.decode(output);
         assertTrue(response instanceof SquareSuccessResponse);
         SquareSuccessResponse squareResponse = (SquareSuccessResponse) response;
         assertEquals("Square of 10 is 100", squareResponse.getAnswer());
@@ -33,10 +33,10 @@ public class TestOCProtocol {
         OCServerData data = new OCServerData();
         OCProtocol protocol = new OCProtocol(data);
 
-        String input = OCMessageFactory.toXml(new RegisterRequest("test@gmail.com", "testGuy", "pass"));
+        String input = OCCodec.encode(new RegisterRequest("test@gmail.com", "testGuy", "pass"));
         String output = protocol.processInput(input);
 
-        Object response = OCMessageFactory.fromXml(output);
+        Object response = OCCodec.decode(output);
         assertTrue(response instanceof SimpleSuccessResponse);
 
         // assert existence
@@ -52,8 +52,8 @@ public class TestOCProtocol {
         data.createProfile("John", "word", "john@omegachess.com");
 
         // Send invites between the users
-        protocol.processInput(OCMessageFactory.toXml(new SendInviteRequest("Daniel", "John")));
-        protocol.processInput(OCMessageFactory.toXml(new SendInviteRequest("John", "Daniel")));
+        protocol.processInput(OCCodec.encode(new SendInviteRequest("Daniel", "John")));
+        protocol.processInput(OCCodec.encode(new SendInviteRequest("John", "Daniel")));
 
         // Create a test match between the users
         data.addMatch(new Match("Daniel", "john"));
@@ -62,9 +62,9 @@ public class TestOCProtocol {
         data.addToArchive(new GameRecord("Daniel", "John", 45, false));
 
         // unregister profile
-        String output = protocol.processInput(OCMessageFactory.toXml(new UnregisterRequest("Daniel")));
+        String output = protocol.processInput(OCCodec.encode(new UnregisterRequest("Daniel")));
 
-        Object response = OCMessageFactory.fromXml(output);
+        Object response = OCCodec.decode(output);
         assertTrue(response instanceof SimpleSuccessResponse);
 
         // assert non-existence in all states
@@ -83,10 +83,10 @@ public class TestOCProtocol {
         data.createProfile("Daniel", "pass", "daniel@gmail.com");
 
         // login
-        String input = OCMessageFactory.toXml(new LoginRequest("Daniel", "pass"));
+        String input = OCCodec.encode(new LoginRequest("Daniel", "pass"));
         String output = protocol.processInput(input);
 
-        Object response = OCMessageFactory.fromXml(output);
+        Object response = OCCodec.decode(output);
         assertTrue(response instanceof SimpleSuccessResponse);
     }
 
@@ -99,9 +99,9 @@ public class TestOCProtocol {
         data.createProfile("PawPatrol", "Pupp!e5!", "PawPatrolPuppySquad@omegachess.net");
 
         // Invite
-        String output = protocol.processInput(OCMessageFactory.toXml(new SendInviteRequest("pawpatrol", "sweetfire")));
+        String output = protocol.processInput(OCCodec.encode(new SendInviteRequest("pawpatrol", "sweetfire")));
 
-        Object response = OCMessageFactory.fromXml(output);
+        Object response = OCCodec.decode(output);
         assertTrue(response instanceof SimpleSuccessResponse, "Invite was not sent!");
         assertFalse(data.getProfile("sweetfire").getMailbox().getReceived().isEmpty(),
                 "Failed to add invite to mailbox received!");
@@ -109,19 +109,19 @@ public class TestOCProtocol {
                 "Failed to add invite to mailbox sent!");
 
         // test to not send an invite to yourself
-        output = protocol.processInput(OCMessageFactory.toXml(new SendInviteRequest("sweetfire", "sweetfire")));
-        response = OCMessageFactory.fromXml(output);
+        output = protocol.processInput(OCCodec.encode(new SendInviteRequest("sweetfire", "sweetfire")));
+        response = OCCodec.decode(output);
         assertTrue(response instanceof FailureResponse, "Invite was sent to yourself");
 
         // test to not send an invite to a user that you already invited/ have been invited
-        output = protocol.processInput(OCMessageFactory.toXml(new SendInviteRequest("sweetfire", "pawpatrol")));
-        response = OCMessageFactory.fromXml(output);
+        output = protocol.processInput(OCCodec.encode(new SendInviteRequest("sweetfire", "pawpatrol")));
+        response = OCCodec.decode(output);
         assertTrue(response instanceof FailureResponse, "Sent an invite to someone who is already in mailbox");
 
         // test to not send an invite to someone you are in a match in
         data.addMatch(new Match("sweetfire", "pawpatrol"));
-        output = protocol.processInput(OCMessageFactory.toXml(new SendInviteRequest("sweetfire", "pawpatrol")));
-        response = OCMessageFactory.fromXml(output);
+        output = protocol.processInput(OCCodec.encode(new SendInviteRequest("sweetfire", "pawpatrol")));
+        response = OCCodec.decode(output);
         assertTrue(response instanceof FailureResponse, "Sent an invite to someone you are in a match with.");
     }
 
@@ -134,12 +134,12 @@ public class TestOCProtocol {
         data.createProfile("italian","!talianHandshak3","needsmorecheese@omegachess.net");
 
         // Send invite
-        protocol.processInput(OCMessageFactory.toXml(new SendInviteRequest("italian", "eatmyshorts")));
+        protocol.processInput(OCCodec.encode(new SendInviteRequest("italian", "eatmyshorts")));
 
         // get sent invites
-        String output = protocol.processInput(OCMessageFactory.toXml(new GetInvitesSentRequest("italian")));
+        String output = protocol.processInput(OCCodec.encode(new GetInvitesSentRequest("italian")));
 
-        Object response = OCMessageFactory.fromXml(output);
+        Object response = OCCodec.decode(output);
         assertTrue(response instanceof InviteListSuccessResponse);
         InviteListSuccessResponse inviteListResp = (InviteListSuccessResponse) response;
         assertFalse(inviteListResp.getInvites().isEmpty());
@@ -147,9 +147,9 @@ public class TestOCProtocol {
         assertEquals("italian", invite.getInviter(), "Failed to get sent invite");
 
         // get received invites
-        output = protocol.processInput(OCMessageFactory.toXml(new GetInvitesReceivedRequest("eatmyshorts")));
+        output = protocol.processInput(OCCodec.encode(new GetInvitesReceivedRequest("eatmyshorts")));
 
-        response = OCMessageFactory.fromXml(output);
+        response = OCCodec.decode(output);
         assertTrue(response instanceof InviteListSuccessResponse);
         inviteListResp = (InviteListSuccessResponse) response;
         assertFalse(inviteListResp.getInvites().isEmpty());
@@ -167,10 +167,10 @@ public class TestOCProtocol {
         data.getProfile("Daniel").setGamesLost(2);
         data.getProfile("Daniel").setGamesTied(3);
 
-        String input = OCMessageFactory.toXml(new GetProfileDataRequest("Daniel"));
+        String input = OCCodec.encode(new GetProfileDataRequest("Daniel"));
         String output = protocol.processInput(input);
 
-        Object response = OCMessageFactory.fromXml(output);
+        Object response = OCCodec.decode(output);
         assertTrue(response instanceof ProfileDataSuccessResponse);
         ProfileDataSuccessResponse profileResp = (ProfileDataSuccessResponse) response;
         assertEquals(1, profileResp.getGamesWon());
@@ -189,10 +189,10 @@ public class TestOCProtocol {
         data.getProfile("Daniel").getMailbox().addNotification(Notification.NotificationType.MATCH_ENDED, "Message 2");
 
         // get notifications
-        String input = OCMessageFactory.toXml(new GetNotificationsRequest("Daniel"));
+        String input = OCCodec.encode(new GetNotificationsRequest("Daniel"));
         String output = protocol.processInput(input);
 
-        Object response = OCMessageFactory.fromXml(output);
+        Object response = OCCodec.decode(output);
         assertTrue(response instanceof NotificationsSuccessResponse);
         NotificationsSuccessResponse notifResp = (NotificationsSuccessResponse) response;
 
@@ -215,14 +215,14 @@ public class TestOCProtocol {
         data.createProfile("Shing", "shaw", "asdfasdwes@omegachess.com");
 
         // Send an invite between the users
-        protocol.processInput(OCMessageFactory.toXml(new SendInviteRequest("shing", "jae")));
+        protocol.processInput(OCCodec.encode(new SendInviteRequest("shing", "jae")));
 
         System.out.println("Testing accepting an invite between two users");
 
         // Testing accept
-        String out = protocol.processInput(OCMessageFactory.toXml(new InviteResponseRequest("accept", "shing", "jae")));
+        String out = protocol.processInput(OCCodec.encode(new InviteResponseRequest("accept", "shing", "jae")));
 
-        Object response = OCMessageFactory.fromXml(out);
+        Object response = OCCodec.decode(out);
         assertTrue(response instanceof InviteResponseSuccessResponse, "Something went wrong");
         InviteResponseSuccessResponse inviteRespResp = (InviteResponseSuccessResponse) response;
         assertTrue(inviteRespResp.isSuccess(), "Something went wrong");
@@ -231,14 +231,14 @@ public class TestOCProtocol {
         assertEquals(1, data.getMatches().size(), "Failed to add a new match to the server.");
 
         // Send an invite between the users
-        protocol.processInput(OCMessageFactory.toXml(new SendInviteRequest("shing", "jae")));
+        protocol.processInput(OCCodec.encode(new SendInviteRequest("shing", "jae")));
 
         System.out.println("Testing declining an invite between two users");
 
         // Testing decline
-        out = protocol.processInput(OCMessageFactory.toXml(new InviteResponseRequest("decline", "shing", "jae")));
+        out = protocol.processInput(OCCodec.encode(new InviteResponseRequest("decline", "shing", "jae")));
 
-        response = OCMessageFactory.fromXml(out);
+        response = OCCodec.decode(out);
         assertTrue(response instanceof InviteResponseSuccessResponse, "Something went wrong");
         inviteRespResp = (InviteResponseSuccessResponse) response;
         assertTrue(inviteRespResp.isSuccess(), "Something went wrong");
@@ -255,21 +255,21 @@ public class TestOCProtocol {
         data.createProfile("that", "one", "thatOne@omegachess.com");
 
         // Test no match available
-        String out = protocol.processInput(OCMessageFactory.toXml(new GetBoardDataRequest(345)));
-        Object response = OCMessageFactory.fromXml(out);
+        String out = protocol.processInput(OCCodec.encode(new GetBoardDataRequest(345)));
+        Object response = OCCodec.decode(out);
         assertTrue(response instanceof FailureResponse, "There should not be any matches in the data right now.");
 
         Match match = new Match("this", "that");
         data.addMatch(match);
 
         // Test match ID is invalid
-        out = protocol.processInput(OCMessageFactory.toXml(new GetBoardDataRequest(123)));
-        response = OCMessageFactory.fromXml(out);
+        out = protocol.processInput(OCCodec.encode(new GetBoardDataRequest(123)));
+        response = OCCodec.decode(out);
         assertTrue(response instanceof FailureResponse, "The match ID 123 shouldn't exist");
 
         // Test that the protocol returns board data
-        out = protocol.processInput(OCMessageFactory.toXml(new GetBoardDataRequest(match.getMatchID())));
-        response = OCMessageFactory.fromXml(out);
+        out = protocol.processInput(OCCodec.encode(new GetBoardDataRequest(match.getMatchID())));
+        response = OCCodec.decode(out);
         assertTrue(response instanceof BoardDataSuccessResponse, "Failed to get board data");
         BoardDataSuccessResponse boardResp = (BoardDataSuccessResponse) response;
         assertTrue(boardResp.isSuccess(), "Failed to get board data");
@@ -293,41 +293,41 @@ public class TestOCProtocol {
         data.createProfile("kyle", "zoop", "fdsa@mail.com");
 
         // send invite
-        protocol.processInput(OCMessageFactory.toXml(new SendInviteRequest("pete", "kyle")));
+        protocol.processInput(OCCodec.encode(new SendInviteRequest("pete", "kyle")));
 
         // accept invite and get matchID
-        String acceptString = protocol.processInput(OCMessageFactory.toXml(new InviteResponseRequest("accept", "pete", "kyle")));
-        Object acceptObj = OCMessageFactory.fromXml(acceptString);
+        String acceptString = protocol.processInput(OCCodec.encode(new InviteResponseRequest("accept", "pete", "kyle")));
+        Object acceptObj = OCCodec.decode(acceptString);
         assertTrue(acceptObj instanceof InviteResponseSuccessResponse);
         int matchID = Integer.parseInt(((InviteResponseSuccessResponse) acceptObj).getMatchID());
 
         // test white pawn in starting position
-        String out = protocol.processInput(OCMessageFactory.toXml(new GetLegalMovesRequest(matchID, 2, 1)));
-        Object response = OCMessageFactory.fromXml(out);
+        String out = protocol.processInput(OCCodec.encode(new GetLegalMovesRequest(matchID, 2, 1)));
+        Object response = OCCodec.decode(out);
         assertTrue(response instanceof LegalMovesSuccessResponse);
         LegalMovesSuccessResponse legalResp = (LegalMovesSuccessResponse) response;
         assertTrue(legalResp.isSuccess());
         assertEquals("/a3/a4/a5/", legalResp.getLegalMoves());
 
         // test black pawn in starting position
-        out = protocol.processInput(OCMessageFactory.toXml(new GetLegalMovesRequest(matchID, 9, 10)));
-        response = OCMessageFactory.fromXml(out);
+        out = protocol.processInput(OCCodec.encode(new GetLegalMovesRequest(matchID, 9, 10)));
+        response = OCCodec.decode(out);
         assertTrue(response instanceof LegalMovesSuccessResponse);
         legalResp = (LegalMovesSuccessResponse) response;
         assertTrue(legalResp.isSuccess());
         assertEquals("/j8/j7/j6/", legalResp.getLegalMoves());
 
         // test knight in starting position
-        out = protocol.processInput(OCMessageFactory.toXml(new GetLegalMovesRequest(matchID, 1, 8)));
-        response = OCMessageFactory.fromXml(out);
+        out = protocol.processInput(OCCodec.encode(new GetLegalMovesRequest(matchID, 1, 8)));
+        response = OCCodec.decode(out);
         assertTrue(response instanceof LegalMovesSuccessResponse);
         legalResp = (LegalMovesSuccessResponse) response;
         assertTrue(legalResp.isSuccess());
         assertEquals("/g3/i3/", legalResp.getLegalMoves());
 
         // test blank square
-        out = protocol.processInput(OCMessageFactory.toXml(new GetLegalMovesRequest(matchID, 5, 5)));
-        response = OCMessageFactory.fromXml(out);
+        out = protocol.processInput(OCCodec.encode(new GetLegalMovesRequest(matchID, 5, 5)));
+        response = OCCodec.decode(out);
         assertTrue(response instanceof FailureResponse);
     }
 
@@ -352,27 +352,27 @@ public class TestOCProtocol {
         data.createProfile("kyle", "zoop", "fdsa@mail.com");
 
         // send invite
-        protocol.processInput(OCMessageFactory.toXml(new SendInviteRequest("pete", "kyle")));
+        protocol.processInput(OCCodec.encode(new SendInviteRequest("pete", "kyle")));
 
         // accept invite and get matchID
-        String acceptString = protocol.processInput(OCMessageFactory.toXml(new InviteResponseRequest("accept", "pete", "kyle")));
-        Object acceptObj = OCMessageFactory.fromXml(acceptString);
+        String acceptString = protocol.processInput(OCCodec.encode(new InviteResponseRequest("accept", "pete", "kyle")));
+        Object acceptObj = OCCodec.decode(acceptString);
         assertTrue(acceptObj instanceof InviteResponseSuccessResponse);
         int matchID = Integer.parseInt(((InviteResponseSuccessResponse) acceptObj).getMatchID());
 
         // test moving white wizard
-        String output = protocol.processInput(OCMessageFactory.toXml(new MatchMoveRequest(matchID, 0, 0, 3, 1)));
-        Object response = OCMessageFactory.fromXml(output);
+        String output = protocol.processInput(OCCodec.encode(new MatchMoveRequest(matchID, 0, 0, 3, 1)));
+        Object response = OCCodec.decode(output);
         assertTrue(response instanceof SimpleSuccessResponse);
 
         // test moving black pawn
-        output = protocol.processInput(OCMessageFactory.toXml(new MatchMoveRequest(matchID, 9, 5, 6, 5)));
-        response = OCMessageFactory.fromXml(output);
+        output = protocol.processInput(OCCodec.encode(new MatchMoveRequest(matchID, 9, 5, 6, 5)));
+        response = OCCodec.decode(output);
         assertTrue(response instanceof SimpleSuccessResponse);
 
         // test moving white knight
-        output = protocol.processInput(OCMessageFactory.toXml(new MatchMoveRequest(matchID, 1, 8, 3, 9)));
-        response = OCMessageFactory.fromXml(output);
+        output = protocol.processInput(OCCodec.encode(new MatchMoveRequest(matchID, 1, 8, 3, 9)));
+        response = OCCodec.decode(output);
         assertTrue(response instanceof SimpleSuccessResponse);
     }
 
@@ -386,21 +386,21 @@ public class TestOCProtocol {
         data.createProfile("kyle", "zoop", "fdsa@mail.com");
 
         // test no matches available
-        String out = protocol.processInput(OCMessageFactory.toXml(new GetInProgressMatchesRequest("pete")));
-        Object response = OCMessageFactory.fromXml(out);
+        String out = protocol.processInput(OCCodec.encode(new GetInProgressMatchesRequest("pete")));
+        Object response = OCCodec.decode(out);
         assertTrue(response instanceof InProgressMatchesSuccessResponse);
         InProgressMatchesSuccessResponse matchesResp = (InProgressMatchesSuccessResponse) response;
         assertEquals(0, matchesResp.getCount());
 
         // send invite
-        protocol.processInput(OCMessageFactory.toXml(new SendInviteRequest("pete", "kyle")));
+        protocol.processInput(OCCodec.encode(new SendInviteRequest("pete", "kyle")));
 
         // accept invite
-        protocol.processInput(OCMessageFactory.toXml(new InviteResponseRequest("accept", "pete", "kyle")));
+        protocol.processInput(OCCodec.encode(new InviteResponseRequest("accept", "pete", "kyle")));
 
         // test match available
-        out = protocol.processInput(OCMessageFactory.toXml(new GetInProgressMatchesRequest("pete")));
-        response = OCMessageFactory.fromXml(out);
+        out = protocol.processInput(OCCodec.encode(new GetInProgressMatchesRequest("pete")));
+        response = OCCodec.decode(out);
         assertTrue(response instanceof InProgressMatchesSuccessResponse);
         matchesResp = (InProgressMatchesSuccessResponse) response;
         ArrayList<String> opponents = new ArrayList<>(), IDs = new ArrayList<>();
@@ -422,15 +422,15 @@ public class TestOCProtocol {
         data.createProfile("Peter", "Parker", "definitelynotspidey@omegachess.com");
 
         // Test no match available
-        String out = protocol.processInput(OCMessageFactory.toXml(new GetTurnRequest(345)));
-        Object response = OCMessageFactory.fromXml(out);
+        String out = protocol.processInput(OCCodec.encode(new GetTurnRequest(345)));
+        Object response = OCCodec.decode(out);
         assertTrue(response instanceof FailureResponse, "There should not be any matches in the data right now.");
 
         Match match = new Match("J", "Peter");
         data.addMatch(match);
 
-        out = protocol.processInput(OCMessageFactory.toXml(new GetTurnRequest(match.getMatchID())));
-        response = OCMessageFactory.fromXml(out);
+        out = protocol.processInput(OCCodec.encode(new GetTurnRequest(match.getMatchID())));
+        response = OCCodec.decode(out);
 
         // Player returned equals the first player
         assertTrue(response instanceof TurnSuccessResponse, "Failed to retrieve current turn");
@@ -440,8 +440,8 @@ public class TestOCProtocol {
         assertEquals("White", turnResp.getColor(), "The current turn color is incorrect");
 
         // Match ID is invalid
-        out = protocol.processInput(OCMessageFactory.toXml(new GetTurnRequest(123)));
-        response = OCMessageFactory.fromXml(out);
+        out = protocol.processInput(OCCodec.encode(new GetTurnRequest(123)));
+        response = OCCodec.decode(out);
         assertTrue(response instanceof FailureResponse, "The match ID 123 shouldn't exist");
     }
 
@@ -456,10 +456,10 @@ public class TestOCProtocol {
         Match match = new Match("this", "shoe");
         data.addMatch(match);
 
-        String input = OCMessageFactory.toXml(new EndMatchRequest(match.getMatchID(), "this", "shoe"));
+        String input = OCCodec.encode(new EndMatchRequest(match.getMatchID(), "this", "shoe"));
         String out = protocol.processInput(input);
 
-        Object response = OCMessageFactory.fromXml(out);
+        Object response = OCCodec.decode(out);
         assertTrue(response instanceof EndMatchSuccessResponse, "The match was unable to end");
         EndMatchSuccessResponse endResp = (EndMatchSuccessResponse) response;
         assertTrue(endResp.isSuccess(), "The match was unable to end");
@@ -483,9 +483,9 @@ public class TestOCProtocol {
         data.addToArchive(r2);
         data.addToArchive(r3);
 
-        String out = protocol.processInput(OCMessageFactory.toXml(new GetGameRecordsRequest("darla")));
+        String out = protocol.processInput(OCCodec.encode(new GetGameRecordsRequest("darla")));
 
-        Object response = OCMessageFactory.fromXml(out);
+        Object response = OCCodec.decode(out);
         assertTrue(response instanceof GameRecordsSuccessResponse, "Error getting archives");
         GameRecordsSuccessResponse recordsResp = (GameRecordsSuccessResponse) response;
         assertTrue(recordsResp.isSuccess(), "Error getting archives");
@@ -496,23 +496,23 @@ public class TestOCProtocol {
     public void testRoundTripSerialization() {
         // SquareRequest
         SquareRequest sq = new SquareRequest(42);
-        String xml = OCMessageFactory.toXml(sq);
-        Object parsed = OCMessageFactory.fromXml(xml);
+        String xml = OCCodec.encode(sq);
+        Object parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof SquareRequest);
         assertEquals(42, ((SquareRequest) parsed).getNumber());
 
         // LoginRequest
         LoginRequest lr = new LoginRequest("nick", "pass");
-        xml = OCMessageFactory.toXml(lr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(lr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof LoginRequest);
         assertEquals("nick", ((LoginRequest) parsed).getNickname());
         assertEquals("pass", ((LoginRequest) parsed).getPassword());
 
         // RegisterRequest
         RegisterRequest rr = new RegisterRequest("e@mail.com", "user1", "pw");
-        xml = OCMessageFactory.toXml(rr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(rr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof RegisterRequest);
         assertEquals("e@mail.com", ((RegisterRequest) parsed).getEmail());
         assertEquals("user1", ((RegisterRequest) parsed).getNickname());
@@ -520,51 +520,51 @@ public class TestOCProtocol {
 
         // UnregisterRequest
         UnregisterRequest ur = new UnregisterRequest("user1");
-        xml = OCMessageFactory.toXml(ur);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(ur);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof UnregisterRequest);
         assertEquals("user1", ((UnregisterRequest) parsed).getNickname());
 
         // GetProfileDataRequest
         GetProfileDataRequest gpdr = new GetProfileDataRequest("nick");
-        xml = OCMessageFactory.toXml(gpdr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(gpdr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof GetProfileDataRequest);
         assertEquals("nick", ((GetProfileDataRequest) parsed).getNickname());
 
         // SendInviteRequest
         SendInviteRequest sir = new SendInviteRequest("alice", "bob");
-        xml = OCMessageFactory.toXml(sir);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(sir);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof SendInviteRequest);
         assertEquals("alice", ((SendInviteRequest) parsed).getInviter());
         assertEquals("bob", ((SendInviteRequest) parsed).getInvitee());
 
         // GetInvitesSentRequest
         GetInvitesSentRequest gisr = new GetInvitesSentRequest("alice");
-        xml = OCMessageFactory.toXml(gisr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(gisr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof GetInvitesSentRequest);
         assertEquals("alice", ((GetInvitesSentRequest) parsed).getUser());
 
         // GetInvitesReceivedRequest
         GetInvitesReceivedRequest girr = new GetInvitesReceivedRequest("bob");
-        xml = OCMessageFactory.toXml(girr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(girr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof GetInvitesReceivedRequest);
         assertEquals("bob", ((GetInvitesReceivedRequest) parsed).getUser());
 
         // GetNotificationsRequest
         GetNotificationsRequest gnr = new GetNotificationsRequest("nick");
-        xml = OCMessageFactory.toXml(gnr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(gnr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof GetNotificationsRequest);
         assertEquals("nick", ((GetNotificationsRequest) parsed).getNickname());
 
         // InviteResponseRequest
         InviteResponseRequest irr = new InviteResponseRequest("accept", "alice", "bob");
-        xml = OCMessageFactory.toXml(irr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(irr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof InviteResponseRequest);
         assertEquals("accept", ((InviteResponseRequest) parsed).getResponse());
         assertEquals("alice", ((InviteResponseRequest) parsed).getInviter());
@@ -572,15 +572,15 @@ public class TestOCProtocol {
 
         // GetBoardDataRequest
         GetBoardDataRequest gbdr = new GetBoardDataRequest(99);
-        xml = OCMessageFactory.toXml(gbdr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(gbdr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof GetBoardDataRequest);
         assertEquals(99, ((GetBoardDataRequest) parsed).getId());
 
         // GetLegalMovesRequest
         GetLegalMovesRequest glmr = new GetLegalMovesRequest(1, 2, 3);
-        xml = OCMessageFactory.toXml(glmr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(glmr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof GetLegalMovesRequest);
         assertEquals(1, ((GetLegalMovesRequest) parsed).getMatchID());
         assertEquals(2, ((GetLegalMovesRequest) parsed).getRow());
@@ -588,8 +588,8 @@ public class TestOCProtocol {
 
         // MatchMoveRequest
         MatchMoveRequest mmr = new MatchMoveRequest(10, 1, 2, 3, 4);
-        xml = OCMessageFactory.toXml(mmr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(mmr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof MatchMoveRequest);
         assertEquals(10, ((MatchMoveRequest) parsed).getMatchID());
         assertEquals(1, ((MatchMoveRequest) parsed).getFromRow());
@@ -599,29 +599,29 @@ public class TestOCProtocol {
 
         // GetInProgressMatchesRequest
         GetInProgressMatchesRequest gipmr = new GetInProgressMatchesRequest("nick");
-        xml = OCMessageFactory.toXml(gipmr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(gipmr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof GetInProgressMatchesRequest);
         assertEquals("nick", ((GetInProgressMatchesRequest) parsed).getNickname());
 
         // GetTurnRequest
         GetTurnRequest gtr = new GetTurnRequest(7);
-        xml = OCMessageFactory.toXml(gtr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(gtr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof GetTurnRequest);
         assertEquals(7, ((GetTurnRequest) parsed).getId());
 
         // GetGameRecordsRequest
         GetGameRecordsRequest ggrr = new GetGameRecordsRequest("user");
-        xml = OCMessageFactory.toXml(ggrr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(ggrr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof GetGameRecordsRequest);
         assertEquals("user", ((GetGameRecordsRequest) parsed).getUser());
 
         // EndMatchRequest
         EndMatchRequest emr = new EndMatchRequest(5, "winner", "loser");
-        xml = OCMessageFactory.toXml(emr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(emr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof EndMatchRequest);
         assertEquals(5, ((EndMatchRequest) parsed).getId());
         assertEquals("winner", ((EndMatchRequest) parsed).getWinner());
@@ -629,44 +629,44 @@ public class TestOCProtocol {
 
         // CheckCheckmateRequest
         CheckCheckmateRequest ccr = new CheckCheckmateRequest(11);
-        xml = OCMessageFactory.toXml(ccr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(ccr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof CheckCheckmateRequest);
         assertEquals(11, ((CheckCheckmateRequest) parsed).getId());
 
         // CheckForfeitRequest
         CheckForfeitRequest cfr = new CheckForfeitRequest(12);
-        xml = OCMessageFactory.toXml(cfr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(cfr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof CheckForfeitRequest);
         assertEquals(12, ((CheckForfeitRequest) parsed).getId());
 
         // SimpleSuccessResponse
         SimpleSuccessResponse ssr = new SimpleSuccessResponse();
-        xml = OCMessageFactory.toXml(ssr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(ssr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof SimpleSuccessResponse);
         assertTrue(((SimpleSuccessResponse) parsed).isSuccess());
 
         // FailureResponse
         FailureResponse fr = new FailureResponse("test reason");
-        xml = OCMessageFactory.toXml(fr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(fr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof FailureResponse);
         assertEquals("test reason", ((FailureResponse) parsed).getReason());
         assertFalse(((FailureResponse) parsed).isSuccess());
 
         // SquareSuccessResponse
         SquareSuccessResponse sqsr = new SquareSuccessResponse("answer text");
-        xml = OCMessageFactory.toXml(sqsr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(sqsr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof SquareSuccessResponse);
         assertEquals("answer text", ((SquareSuccessResponse) parsed).getAnswer());
 
         // ProfileDataSuccessResponse
         ProfileDataSuccessResponse pdsr = new ProfileDataSuccessResponse(true, "nick", 10, 5, 2);
-        xml = OCMessageFactory.toXml(pdsr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(pdsr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof ProfileDataSuccessResponse);
         ProfileDataSuccessResponse pdsrParsed = (ProfileDataSuccessResponse) parsed;
         assertEquals("nick", pdsrParsed.getNickname());
@@ -678,8 +678,8 @@ public class TestOCProtocol {
         List<InviteRecord> invites = new ArrayList<>();
         invites.add(new InviteRecord("a", "b", false, false));
         InviteListSuccessResponse ilsr = new InviteListSuccessResponse(true, 1, 1, 5, invites);
-        xml = OCMessageFactory.toXml(ilsr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(ilsr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof InviteListSuccessResponse);
         InviteListSuccessResponse ilsrParsed = (InviteListSuccessResponse) parsed;
         assertEquals(1, ilsrParsed.getInvites().size());
@@ -690,8 +690,8 @@ public class TestOCProtocol {
         List<NotificationRecord> notifs = new ArrayList<>();
         notifs.add(new NotificationRecord("EVENT", "msg", "2024-01-01"));
         NotificationsSuccessResponse nsr = new NotificationsSuccessResponse(true, 1, notifs);
-        xml = OCMessageFactory.toXml(nsr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(nsr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof NotificationsSuccessResponse);
         NotificationsSuccessResponse nsrParsed = (NotificationsSuccessResponse) parsed;
         assertEquals(1, nsrParsed.getCount());
@@ -700,8 +700,8 @@ public class TestOCProtocol {
 
         // InviteResponseSuccessResponse
         InviteResponseSuccessResponse irsr = new InviteResponseSuccessResponse(true, "42");
-        xml = OCMessageFactory.toXml(irsr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(irsr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof InviteResponseSuccessResponse);
         assertEquals("42", ((InviteResponseSuccessResponse) parsed).getMatchID());
 
@@ -709,8 +709,8 @@ public class TestOCProtocol {
         List<PieceEntry> pieces = new ArrayList<>();
         pieces.add(new PieceEntry("a1", "Rook"));
         BoardDataSuccessResponse bdsr = new BoardDataSuccessResponse(true, pieces);
-        xml = OCMessageFactory.toXml(bdsr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(bdsr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof BoardDataSuccessResponse);
         BoardDataSuccessResponse bdsrParsed = (BoardDataSuccessResponse) parsed;
         assertEquals(1, bdsrParsed.getPieces().size());
@@ -719,8 +719,8 @@ public class TestOCProtocol {
 
         // LegalMovesSuccessResponse
         LegalMovesSuccessResponse lmsr = new LegalMovesSuccessResponse(true, "/a3/a4/", false);
-        xml = OCMessageFactory.toXml(lmsr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(lmsr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof LegalMovesSuccessResponse);
         assertEquals("/a3/a4/", ((LegalMovesSuccessResponse) parsed).getLegalMoves());
         assertFalse(((LegalMovesSuccessResponse) parsed).isEnPassant());
@@ -729,8 +729,8 @@ public class TestOCProtocol {
         List<MatchSummary> matchSummaries = new ArrayList<>();
         matchSummaries.add(new MatchSummary("opp", 77, 1));
         InProgressMatchesSuccessResponse ipmsr = new InProgressMatchesSuccessResponse(true, 1, matchSummaries);
-        xml = OCMessageFactory.toXml(ipmsr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(ipmsr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof InProgressMatchesSuccessResponse);
         InProgressMatchesSuccessResponse ipmsrParsed = (InProgressMatchesSuccessResponse) parsed;
         assertEquals(1, ipmsrParsed.getCount());
@@ -739,8 +739,8 @@ public class TestOCProtocol {
 
         // TurnSuccessResponse
         TurnSuccessResponse tsr = new TurnSuccessResponse(true, "player1", "White");
-        xml = OCMessageFactory.toXml(tsr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(tsr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof TurnSuccessResponse);
         assertEquals("player1", ((TurnSuccessResponse) parsed).getUser());
         assertEquals("White", ((TurnSuccessResponse) parsed).getColor());
@@ -749,8 +749,8 @@ public class TestOCProtocol {
         List<GameRecordEntry> records = new ArrayList<>();
         records.add(new GameRecordEntry("opp", "win", 30));
         GameRecordsSuccessResponse grsr = new GameRecordsSuccessResponse(true, 1, records);
-        xml = OCMessageFactory.toXml(grsr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(grsr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof GameRecordsSuccessResponse);
         GameRecordsSuccessResponse grsrParsed = (GameRecordsSuccessResponse) parsed;
         assertEquals(1, grsrParsed.getNumber());
@@ -760,15 +760,15 @@ public class TestOCProtocol {
 
         // EndMatchSuccessResponse
         EndMatchSuccessResponse emsr = new EndMatchSuccessResponse(true, "archiveId");
-        xml = OCMessageFactory.toXml(emsr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(emsr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof EndMatchSuccessResponse);
         assertEquals("archiveId", ((EndMatchSuccessResponse) parsed).getArchiveID());
 
         // CheckmateSuccessResponse
         CheckmateSuccessResponse cmsr = new CheckmateSuccessResponse(true, true, "loser", "winner");
-        xml = OCMessageFactory.toXml(cmsr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(cmsr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof CheckmateSuccessResponse);
         CheckmateSuccessResponse cmsrParsed = (CheckmateSuccessResponse) parsed;
         assertTrue(cmsrParsed.isCheckmate());
@@ -777,8 +777,8 @@ public class TestOCProtocol {
 
         // ForfeitSuccessResponse
         ForfeitSuccessResponse fsr = new ForfeitSuccessResponse(true, true);
-        xml = OCMessageFactory.toXml(fsr);
-        parsed = OCMessageFactory.fromXml(xml);
+        xml = OCCodec.encode(fsr);
+        parsed = OCCodec.decode(xml);
         assertTrue(parsed instanceof ForfeitSuccessResponse);
         assertTrue(((ForfeitSuccessResponse) parsed).isForfeit());
     }
