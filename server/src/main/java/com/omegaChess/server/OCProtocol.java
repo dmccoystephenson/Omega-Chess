@@ -5,101 +5,69 @@ import com.omegaChess.exceptions.IllegalMoveException;
 import com.omegaChess.exceptions.IllegalPositionException;
 import com.omegaChess.pieces.ChessPiece;
 import com.omegaChess.pieces.LegalMoves;
+import com.omegaChess.protocol.OCMessageFactory;
+import com.omegaChess.protocol.messages.*;
 
 import java.util.ArrayList;
+import java.util.List;
 
 // this class is responsible for actually processing any input from a client
 public class OCProtocol {
 
     private final OCServerData serverData;
-    private OCMessage message;
 
     public OCProtocol(OCServerData data) {
         serverData = data;
-        message = new OCMessage();
     }
 
     public String processInput(String input) {
         String toReturn = "";
         try {
-            OCMessage receivedMessage = new OCMessage();
-            receivedMessage.fromString(input);
+            Object request = OCMessageFactory.fromXml(input);
 
-            String process = receivedMessage.get("process");
-
-            switch(process) {
-                case "square":
-                    toReturn = squareInput(receivedMessage);
-                    break;
-                case "register":
-                    toReturn = registerUser(receivedMessage);
-                    break;
-                case "unregister":
-                    toReturn = unregisterUser(receivedMessage);
-                    break;
-                case "login":
-                    toReturn = loginUser(receivedMessage);
-                    break;
-                case "get profile data":
-                    toReturn = getProfileData(receivedMessage);
-                    break;
-                case "invite":
-                    toReturn = sendInvite(receivedMessage);
-                    break;
-                case "invites sent":
-                    toReturn = getSentInvites(receivedMessage);
-                    break;
-                case "invites received":
-                    toReturn = getReceivedInvites(receivedMessage);
-                    break;
-                case "get notifications":
-                    toReturn = getNotifications(receivedMessage);
-                    break;
-                case "invite response":
-                    toReturn = inviteResponse(receivedMessage);
-                    break;
-                case "get legal moves":
-                    toReturn = getLegalMoves(receivedMessage);
-                    break;
-                case "get board data":
-                    toReturn = getBoardData(receivedMessage);
-                    break;
-                case "match move":
-                    toReturn = matchMove(receivedMessage);
-                    break;
-                case "get in-progress matches":
-                    toReturn = resumeMatchesListResponse(receivedMessage);
-                    break;
-                case "get turn":
-                    toReturn = getTurn(receivedMessage);
-                    break;
-                case "end match":
-                    toReturn = endMatch(receivedMessage);
-                    break;
-                case "get game records":
-                    toReturn = getGameRecords(receivedMessage);
-                    break;
-                case "checkmate check":
-                    toReturn = checkCheckmate(receivedMessage);
-                    break;
-                case "forfeit check":
-                    toReturn = checkForfeit(receivedMessage);
-                    break;
-                default:
-                    message = new OCMessage();
-                    message.put("success", "false");
-                    message.put("reason", "process not recognized");
-
-                    toReturn = message.toString();
-                    break;
+            if (request instanceof SquareRequest) {
+                toReturn = squareInput((SquareRequest) request);
+            } else if (request instanceof RegisterRequest) {
+                toReturn = registerUser((RegisterRequest) request);
+            } else if (request instanceof UnregisterRequest) {
+                toReturn = unregisterUser((UnregisterRequest) request);
+            } else if (request instanceof LoginRequest) {
+                toReturn = loginUser((LoginRequest) request);
+            } else if (request instanceof GetProfileDataRequest) {
+                toReturn = getProfileData((GetProfileDataRequest) request);
+            } else if (request instanceof SendInviteRequest) {
+                toReturn = sendInvite((SendInviteRequest) request);
+            } else if (request instanceof GetInvitesSentRequest) {
+                toReturn = getSentInvites((GetInvitesSentRequest) request);
+            } else if (request instanceof GetInvitesReceivedRequest) {
+                toReturn = getReceivedInvites((GetInvitesReceivedRequest) request);
+            } else if (request instanceof GetNotificationsRequest) {
+                toReturn = getNotifications((GetNotificationsRequest) request);
+            } else if (request instanceof InviteResponseRequest) {
+                toReturn = inviteResponse((InviteResponseRequest) request);
+            } else if (request instanceof GetLegalMovesRequest) {
+                toReturn = getLegalMoves((GetLegalMovesRequest) request);
+            } else if (request instanceof GetBoardDataRequest) {
+                toReturn = getBoardData((GetBoardDataRequest) request);
+            } else if (request instanceof MatchMoveRequest) {
+                toReturn = matchMove((MatchMoveRequest) request);
+            } else if (request instanceof GetInProgressMatchesRequest) {
+                toReturn = resumeMatchesListResponse((GetInProgressMatchesRequest) request);
+            } else if (request instanceof GetTurnRequest) {
+                toReturn = getTurn((GetTurnRequest) request);
+            } else if (request instanceof EndMatchRequest) {
+                toReturn = endMatch((EndMatchRequest) request);
+            } else if (request instanceof GetGameRecordsRequest) {
+                toReturn = getGameRecords((GetGameRecordsRequest) request);
+            } else if (request instanceof CheckCheckmateRequest) {
+                toReturn = checkCheckmate((CheckCheckmateRequest) request);
+            } else if (request instanceof CheckForfeitRequest) {
+                toReturn = checkForfeit((CheckForfeitRequest) request);
+            } else {
+                toReturn = OCMessageFactory.toXml(new FailureResponse("process not recognized"));
             }
         } catch (Exception e) {
-            message = new OCMessage();
-            message.put("success", "false");
-            message.put("reason", "Something went wrong when processing input.");
-
-            toReturn = message.toString();
-
+            toReturn = OCMessageFactory.toXml(new FailureResponse("Something went wrong when processing input."));
             e.printStackTrace();
             System.out.println("Something went wrong when processing input.");
         }
@@ -107,63 +75,40 @@ public class OCProtocol {
         return toReturn;
     }
 
-    private String squareInput(OCMessage receivedMessage) {
-        String inputLine = receivedMessage.get("number");
+    private String squareInput(SquareRequest request) {
+        int number = request.getNumber();
 
-        System.out.println("Attempting to square " + inputLine + "...");
-        int number;
-
-        try {
-            number = Integer.parseInt(inputLine);
-        } catch (Exception e) {
-            message = new OCMessage();
-            message.put("success", "false");
-            message.put("reason", "Wrong input!");
-
-            return message.toString();
-        }
+        System.out.println("Attempting to square " + number + "...");
 
         int square = number * number;
         System.out.println("Square: " + square);
 
-
-        message = new OCMessage();
-        message.put("success", "true");
-        message.put("answer", "Square of " + number + " is " + square);
-
-        return message.toString();
+        return OCMessageFactory.toXml(new SquareSuccessResponse("Square of " + number + " is " + square));
     }
 
-    private String registerUser(OCMessage receivedMessage) {
+    private String registerUser(RegisterRequest request) {
 
-        String email = receivedMessage.get("email");
-        String nickname = receivedMessage.get("nickname");
-        String password = receivedMessage.get("password");
+        String email = request.getEmail();
+        String nickname = request.getNickname();
+        String password = request.getPassword();
 
         System.out.println("Attempting to register new user: " + nickname);
 
         Boolean success = serverData.createProfile(nickname, password, email);
 
-        message = new OCMessage();
         if (success) {
-            message.put("success", "true");
-
             System.out.println("Registered!");
+            return OCMessageFactory.toXml(new SimpleSuccessResponse());
         }
         else {
-            message.put("success", "false");
-            message.put("reason", "nickname/email was taken");
-
             System.out.println("Nickname or email was taken.");
-
+            return OCMessageFactory.toXml(new FailureResponse("nickname/email was taken"));
         }
-
-        return message.toString();
     }
 
-    private String unregisterUser(OCMessage receivedMessage) {
+    private String unregisterUser(UnregisterRequest request) {
 
-        String nickname = receivedMessage.get("nickname");
+        String nickname = request.getNickname();
 
         System.out.println("Attempting to unregister user: " + nickname);
 
@@ -214,133 +159,99 @@ public class OCProtocol {
             }
         }
 
-
-        message = new OCMessage();
         if (success) {
-            message.put("success", "true");
-
             System.out.println("Unregistered!");
-
+            return OCMessageFactory.toXml(new SimpleSuccessResponse());
         }
         else {
-            message.put("success", "false");
-            message.put("reason", "nickname wasn't found");
-
             System.out.println("Nickname wasn't found.");
-
+            return OCMessageFactory.toXml(new FailureResponse("nickname wasn't found"));
         }
-        return message.toString();
     }
 
-    private String loginUser(OCMessage receivedMessage) {
+    private String loginUser(LoginRequest request) {
 
-        String nickname = receivedMessage.get("nickname");
-        String password = receivedMessage.get("password");
+        String nickname = request.getNickname();
+        String password = request.getPassword();
 
         System.out.println("Attempting to login user: " + nickname);
 
-        message = new OCMessage();
-
         if (!serverData.profileExists(nickname)) {
             // profile doesn't exist
-            message.put("success", "false");
-            message.put("reason", "nickname wasn't found");
-
             System.out.println("Nickname wasn't found.");
-            return message.toString();
+            return OCMessageFactory.toXml(new FailureResponse("nickname wasn't found"));
         }
 
         Boolean success = serverData.checkPassword(nickname, password);
 
         if (success) {
-            message.put("success", "true");
-
             System.out.println("Logged in!");
-
+            return OCMessageFactory.toXml(new SimpleSuccessResponse());
         }
         else {
-            message.put("success", "false");
-            message.put("reason", "wrong password");
-
             System.out.println("Wrong password.");
-
+            return OCMessageFactory.toXml(new FailureResponse("wrong password"));
         }
-
-        return message.toString();
     }
 
-    private String getProfileData(OCMessage receivedMessage) {
+    private String getProfileData(GetProfileDataRequest request) {
 
-        String nickname = receivedMessage.get("nickname");
+        String nickname = request.getNickname();
 
         System.out.println("Attempting to get profile data for user: " + nickname);
 
-        message = new OCMessage();
-
         if (!serverData.profileExists(nickname)) {
             // profile doesn't exist
-            message.put("success", "false");
-            message.put("reason", "nickname wasn't found");
-
             System.out.println("Nickname wasn't found.");
-            return message.toString();
+            return OCMessageFactory.toXml(new FailureResponse("nickname wasn't found"));
         }
 
-        message.put("success", "true");
-        message.put("nickname", nickname);
-        message.put("gamesWon", "" + serverData.getProfile(nickname).getGamesWon());
-        message.put("gamesLost", "" + serverData.getProfile(nickname).getGamesLost());
-        message.put("gamesTied", "" + serverData.getProfile(nickname).getGamesTied());
+        ProfileDataSuccessResponse response = new ProfileDataSuccessResponse(
+                true,
+                nickname,
+                serverData.getProfile(nickname).getGamesWon(),
+                serverData.getProfile(nickname).getGamesLost(),
+                serverData.getProfile(nickname).getGamesTied()
+        );
 
-        return message.toString();
+        return OCMessageFactory.toXml(response);
 
     }
 
-   private String sendInvite(OCMessage receivedMessage){
+   private String sendInvite(SendInviteRequest request){
 
-        String inviter = receivedMessage.get("inviter");
-        String invitee = receivedMessage.get("invitee");
-
-       message = new OCMessage();
+        String inviter = request.getInviter();
+        String invitee = request.getInvitee();
 
         if (invitee.equalsIgnoreCase(inviter)){
             // Can't send invite to yourself
-            message.put("success", "false");
-            message.put("reason", "Can't send an invite to yourself");
-
-            System.out.println(message.get("reason"));
-            return message.toString();
+            System.out.println("Can't send an invite to yourself");
+            return OCMessageFactory.toXml(new FailureResponse("Can't send an invite to yourself"));
         }
 
        System.out.println("Attempting to send invite from " + inviter + " to " + invitee);
 
        if (!serverData.profileExists(invitee)){
            // Invitee doesn't exist
-           message.put("success", "false");
-           message.put("reason", "input user doesn't exist");
-
            System.out.println("Target user doesn't exist");
-           return message.toString();
+           return OCMessageFactory.toXml(new FailureResponse("input user doesn't exist"));
        }
 
        UserProfile player1 = serverData.getProfile(inviter);
        UserProfile player2 = serverData.getProfile(invitee);
        if (lookForMatch(inviter, invitee) != null){
-           message.put("success", "false");
-           message.put("reason", "Already in a match with " + invitee);
-           System.out.println(message.get("reason"));
-           return message.toString();
+           String reason = "Already in a match with " + invitee;
+           System.out.println(reason);
+           return OCMessageFactory.toXml(new FailureResponse(reason));
        }
        if (lookForInvite(inviter, invitee, player1.getMailbox(), true) != null){
-           message.put("success", "false");
-           message.put("reason", "Already sent an invite to " + invitee);
-           System.out.println(message.get("reason"));
-           return message.toString();   // return if invite was already sent
+           String reason = "Already sent an invite to " + invitee;
+           System.out.println(reason);
+           return OCMessageFactory.toXml(new FailureResponse(reason));
        }else if (lookForInvite(inviter, invitee, player1.getMailbox(), false) != null){
-           message.put("success", "false");
-           message.put("reason", "Already have an invite from " + inviter);
-           System.out.println(message.get("reason"));
-           return message.toString();   // return if invite was already sent
+           String reason = "Already have an invite from " + inviter;
+           System.out.println(reason);
+           return OCMessageFactory.toXml(new FailureResponse(reason));
        }
        Invite invite = new Invite(inviter, invitee);
        player1.getMailbox().addToSent(invite);
@@ -348,126 +259,119 @@ public class OCProtocol {
        player2.getMailbox().addNotification(Notification.NotificationType.INVITE_REQUEST,
                "You have been invited to play OmegaChess by user: " + inviter +
                ". Go to your mailbox to accept/decline this invite.");
-       message.put("success", "true");
 
        System.out.println("Invite has been sent");
-       return message.toString();
+       return OCMessageFactory.toXml(new SimpleSuccessResponse());
 
    }
 
-   private String getSentInvites(OCMessage receivedMessage){
+   private String getSentInvites(GetInvitesSentRequest request){
 
-        String user = receivedMessage.get("user");
+        String user = request.getUser();
 
         System.out.println("Attempting to recover sent invites from " + user);
 
-        message = new OCMessage();
-
         if (!serverData.profileExists(user)){
             // target user doesn't exist
-            message.put("success", "false");
-            message.put("reason", "target user doesn't exist");
-
             System.out.println("Target user doesn't exist");
-            return message.toString();
+            return OCMessageFactory.toXml(new FailureResponse("target user doesn't exist"));
         }
 
         UserProfile profile = serverData.getProfile(user);
         ArrayList<Invite> sent = profile.getMailbox().getSent();
-        message.put("success", "true");
-        message.put("amount", sent.size()+"");
-        int count = 0;
+        List<InviteRecord> inviteRecords = new ArrayList<InviteRecord>();
         for (Invite invite : sent) {
-            OCMessage in = new OCMessage();
-            in.fromString(invite.toString());
-            message.put("object" + count, in.get("object"));
-            message.put("inviter" + count, in.get("inviter"));
-            message.put("invitee" + count, in.get("invitee"));
-            message.put("accepted" + count, in.get("accepted"));
-            message.put("declined" + count, in.get("declined"));
-            count++;
+            InviteRecord record = new InviteRecord(
+                    invite.getInviter(),
+                    invite.getInvitee(),
+                    invite.isAccepted(),
+                    invite.isDeclined()
+            );
+            inviteRecords.add(record);
         }
 
-       message.put("totalCount", String.valueOf(count));
-       message.put("maxNicknameLength", String.valueOf(serverData.getLongestNickname()));
+       InviteListSuccessResponse response = new InviteListSuccessResponse(
+               true,
+               sent.size(),
+               inviteRecords.size(),
+               serverData.getLongestNickname(),
+               inviteRecords
+       );
 
        System.out.println("Recovered sent invites!");
-        return message.toString();
+       return OCMessageFactory.toXml(response);
    }
 
-   private String getReceivedInvites(OCMessage receivedMessage){
+   private String getReceivedInvites(GetInvitesReceivedRequest request){
 
-        String user = receivedMessage.get("user");
+        String user = request.getUser();
 
         System.out.println("Attempting to recover received invites from " + user);
 
-        message = new OCMessage();
-
         if (!serverData.profileExists(user)){
             // target user doesn't exist
-            message.put("success", "false");
-            message.put("reason", "target user doesn't exist");
-
             System.out.println("Target user doesn't exist");
-            return message.toString();
+            return OCMessageFactory.toXml(new FailureResponse("target user doesn't exist"));
         }
 
         UserProfile profile = serverData.getProfile(user);
         ArrayList<Invite> received = profile.getMailbox().getReceived();
-        message.put("success", "true");
-        message.put("amount", received.size()+"");
-        int count = 0;
+        List<InviteRecord> inviteRecords = new ArrayList<InviteRecord>();
         for (Invite invite : received) {
-            OCMessage in = new OCMessage();
-            in.fromString(invite.toString());
-            message.put("object" + count, "invite");
-            message.put("inviter" + count, in.get("inviter"));
-            message.put("invitee" + count, in.get("invitee"));
-            message.put("accepted" + count, in.get("accepted"));
-            message.put("declined" + count, in.get("declined"));
-            count++;
+            InviteRecord record = new InviteRecord(
+                    invite.getInviter(),
+                    invite.getInvitee(),
+                    invite.isAccepted(),
+                    invite.isDeclined()
+            );
+            inviteRecords.add(record);
         }
-        message.put("totalCount", String.valueOf(count));
-        message.put("maxNicknameLength", String.valueOf(serverData.getLongestNickname()));
+
+        InviteListSuccessResponse response = new InviteListSuccessResponse(
+                true,
+                received.size(),
+                inviteRecords.size(),
+                serverData.getLongestNickname(),
+                inviteRecords
+        );
 
        System.out.println("Recovered received invites!");
-        return message.toString();
+       return OCMessageFactory.toXml(response);
    }
 
-   private String getNotifications(OCMessage receivedMessage) {
-       String user = receivedMessage.get("nickname");
-
-       message = new OCMessage();
+   private String getNotifications(GetNotificationsRequest request) {
+       String user = request.getNickname();
 
        if (!serverData.profileExists(user)){
            // target user doesn't exist
-           message.put("success", "false");
-           message.put("reason", "target user doesn't exist");
-
            System.out.println("Target user doesn't exist");
-           return message.toString();
+           return OCMessageFactory.toXml(new FailureResponse("target user doesn't exist"));
        }
 
        ArrayList<Notification> notifications = serverData.getProfile(user).getMailbox().getNotifications();
 
-       message.put("success", "true");
-
-       message.put("count", "" + notifications.size());
-
+       List<NotificationRecord> notificationRecords = new ArrayList<NotificationRecord>();
        for (int i = 0; i < notifications.size(); i++) {
-           message.put("event" + (i + 1), notifications.get(i).getEvent().name());
-           message.put("message" + (i + 1), notifications.get(i).getMessage());
-           message.put("datestring" + (i + 1), notifications.get(i).getDateString());
+           notificationRecords.add(new NotificationRecord(
+                   notifications.get(i).getEvent().name(),
+                   notifications.get(i).getMessage(),
+                   notifications.get(i).getDateString()
+           ));
        }
-       
-       return message.toString();
+
+       NotificationsSuccessResponse response = new NotificationsSuccessResponse(
+               true,
+               notifications.size(),
+               notificationRecords
+       );
+
+       return OCMessageFactory.toXml(response);
    }
 
-    private String inviteResponse(OCMessage receivedMessage){
-        String response = receivedMessage.get("response"),
-                inviter = receivedMessage.get("inviter"),
-                invitee = receivedMessage.get("invitee");
-        message = new OCMessage();
+    private String inviteResponse(InviteResponseRequest request){
+        String response = request.getResponse();
+        String inviter = request.getInviter();
+        String invitee = request.getInvitee();
 
         System.out.println("Attempting to " + response + " invite from " + inviter + " to " + invitee);
 
@@ -485,9 +389,7 @@ public class OCProtocol {
                         serverData.addMatch(match);
                         mail.addNotification(Notification.NotificationType.ACCEPTED_INVITE,
                                 invitee + " accepted your invite request. Go to the Resume Game screen to enter the match.");
-                        message.put("success", "true");
-                        message.put("matchID", Integer.toString(matchID));
-                        return message.toString();
+                        return OCMessageFactory.toXml(new InviteResponseSuccessResponse(true, Integer.toString(matchID)));
                     }
                 }
             }
@@ -502,49 +404,48 @@ public class OCProtocol {
                         serverData.getProfile(invitee).getMailbox().removeFromReceived(inviteF);
                         mail.addNotification(Notification.NotificationType.DECLINED_INVITE,
                                 invitee + " declined your invite request.");
-                        message.put("success", "true");
-                        return message.toString();
+                        return OCMessageFactory.toXml(new InviteResponseSuccessResponse(true, null));
                     }
                 }
             }
         }
-        return message.toString();
+        return OCMessageFactory.toXml(new InviteResponseSuccessResponse(true, null));
     }
 
-    public String getBoardData(OCMessage receivedMessage){
-        int ID = Integer.parseInt(receivedMessage.get("ID"));
-        message = new OCMessage();
+    public String getBoardData(GetBoardDataRequest request){
+        int ID = request.getId();
 
         System.out.println("Attempting to get board for match " + ID);
 
         Match match = null;
         if (serverData.getMatches().size() == 0){
-            message.put("success", "false");
-            message.put("reason", "There are no matches available");
+            return OCMessageFactory.toXml(new FailureResponse("There are no matches available"));
         }
         for (Match mat : serverData.getMatches()){
             if (mat.getMatchID() == ID) {
-                message.put("success", "true");
                 match = mat;
                 break;
             }
         }
         if (match == null) {
-            message.put("success", "false");
-            message.put("reason", "No match found that has ID=" + ID);
-            return message.toString();
+            return OCMessageFactory.toXml(new FailureResponse("No match found that has ID=" + ID));
         }
 
-        message.fromString(match.getBoard().getPieces());
+        List<PieceEntry> pieceList = new ArrayList<PieceEntry>();
+        for (ChessPiece piece : match.getBoard().white_pieces) {
+            pieceList.add(new PieceEntry(piece.getPosition(), piece.toString()));
+        }
+        for (ChessPiece piece : match.getBoard().black_pieces) {
+            pieceList.add(new PieceEntry(piece.getPosition(), piece.toString()));
+        }
 
-        return message.toString();
+        return OCMessageFactory.toXml(new BoardDataSuccessResponse(true, pieceList));
     }
 
-    private String getLegalMoves(OCMessage receivedMessage) {
-        int matchID = Integer.parseInt(receivedMessage.get("matchID"));
-        int row = Integer.parseInt(receivedMessage.get("row"));
-        int column = Integer.parseInt(receivedMessage.get("column"));
-        message = new OCMessage();
+    private String getLegalMoves(GetLegalMovesRequest request) {
+        int matchID = request.getMatchID();
+        int row = request.getRow();
+        int column = request.getColumn();
 
         // get correct match and board
 
@@ -563,9 +464,7 @@ public class OCProtocol {
         // get legal moves for that piece
         LegalMoves moves;
         if (piece == null) {
-            message.put("success", "false");
-            message.put("reason", "no piece at specified position");
-            return message.toString();
+            return OCMessageFactory.toXml(new FailureResponse("no piece at specified position"));
         } else {
             moves = piece.getNormalOrCheckMoves();
         }
@@ -574,28 +473,20 @@ public class OCProtocol {
             legalMoves += move;
             legalMoves += "/";
         }
-        message.put("success", "true");
-        message.put("legal moves", legalMoves);
-        if (moves.isEnPessant()) {
-            message.put("enPessant", "true");
-        }
-        else {
-            message.put("enPessant", "false");
-        }
+
         System.out.println("Sending legal moves: " + legalMoves);
 
-        return message.toString();
+        return OCMessageFactory.toXml(new LegalMovesSuccessResponse(true, legalMoves, moves.isEnPessant()));
     }
 
-    private String matchMove(OCMessage receivedMessage) {
-        int matchID = Integer.parseInt(receivedMessage.get("matchID"));
+    private String matchMove(MatchMoveRequest request) {
+        int matchID = request.getMatchID();
         int[] fromArray = new int[2];
         int[] toArray = new int[2];
-        fromArray[0] = Integer.parseInt(receivedMessage.get("fromRow"));
-        fromArray[1] = Integer.parseInt(receivedMessage.get("fromColumn"));
-        toArray[0] = Integer.parseInt(receivedMessage.get("toRow"));
-        toArray[1] = Integer.parseInt(receivedMessage.get("toColumn"));
-        message = new OCMessage();
+        fromArray[0] = request.getFromRow();
+        fromArray[1] = request.getFromColumn();
+        toArray[0] = request.getToRow();
+        toArray[1] = request.getToColumn();
 
         // get correct match and board
         Match match = serverData.getMatch(matchID);
@@ -613,94 +504,73 @@ public class OCProtocol {
         }
 
         if (moveMade) {
-            message.put("success", "true");
             System.out.println("Move was successful!");
+            return OCMessageFactory.toXml(new SimpleSuccessResponse());
         } else {
-            message.put("success", "false");
-            message.put("reason", "invalid move");
             System.out.println("Invalid move!");
+            return OCMessageFactory.toXml(new FailureResponse("invalid move"));
         }
-        return message.toString();
     }
 
-    public String resumeMatchesListResponse(OCMessage receivedMessage) {
-        String user = receivedMessage.get("nickname");
+    public String resumeMatchesListResponse(GetInProgressMatchesRequest request) {
+        String user = request.getNickname();
         int count = 0;
         ArrayList<Match> matches = serverData.getMatches();
-        message = new OCMessage();
 
-        message.put("success", "true");
+        List<MatchSummary> matchSummaries = new ArrayList<MatchSummary>();
         // This allows us to figure out if the user requesting the match to resume is the first or second player
         for (Match m : matches) {
             if (m.getProfile1().equalsIgnoreCase(user)) {
                 count++;
-                message.put("playerIndex"+count, String.valueOf(1));
-                message.put("opponent"+count, m.getProfile2());
-                message.put("ID"+count,String.valueOf(m.getMatchID()));
+                matchSummaries.add(new MatchSummary(m.getProfile2(), m.getMatchID(), 1));
             }
             else if (m.getProfile2().equalsIgnoreCase(user)) {
                 count++;
-                message.put("playerIndex"+count, String.valueOf(2));
-                message.put("opponent"+count, m.getProfile1());
-                message.put("ID"+count,String.valueOf(m.getMatchID()));
+                matchSummaries.add(new MatchSummary(m.getProfile1(), m.getMatchID(), 2));
             }
         }
 
-        message.put("count", String.valueOf(count));
-
-        return message.toString();
+        return OCMessageFactory.toXml(new InProgressMatchesSuccessResponse(true, count, matchSummaries));
     }
 
-    public String getTurn(OCMessage receivedMessage){
-        int ID = Integer.parseInt(receivedMessage.get("ID"));
-        message = new OCMessage();
+    public String getTurn(GetTurnRequest request){
+        int ID = request.getId();
 
         TurnTracker turn = null;
         if (serverData.getMatches().size() == 0){
-            message.put("success", "false");
-            message.put("reason", "There are no matches available");
+            return OCMessageFactory.toXml(new FailureResponse("There are no matches available"));
         }
         for (Match match : serverData.getMatches()){
             if (match.getMatchID() == ID) {
-                message.put("success", "true");
                 turn = match.getBoard().getTurn();
                 break;
             }
         }
         if (turn == null) {
-            message.put("success", "false");
-            message.put("reason", "No match found that has ID=" + ID);
-            return message.toString();
+            return OCMessageFactory.toXml(new FailureResponse("No match found that has ID=" + ID));
         }
 
-        message.put("user", turn.getCurrentTurnPlayer());
-        message.put("color", turn.getCurrentTurnColor().toString());
-
-        return message.toString();
+        return OCMessageFactory.toXml(new TurnSuccessResponse(true, turn.getCurrentTurnPlayer(), turn.getCurrentTurnColor().toString()));
     }
 
-    public String endMatch(OCMessage receivedMessage) {
-        int ID = Integer.valueOf(receivedMessage.get("ID")), moves = 0;
-        String loser = receivedMessage.get("loser"), winner = receivedMessage.get("winner");
-        message = new OCMessage();
+    public String endMatch(EndMatchRequest request) {
+        int ID = request.getId();
+        int moves = 0;
+        String loser = request.getLoser();
+        String winner = request.getWinner();
 
         Match end = null;
         if (serverData.getMatches().size() == 0) {
-            message.put("success", "false");
-            message.put("reason", "There are no matches available");
-            return message.toString();
+            return OCMessageFactory.toXml(new FailureResponse("There are no matches available"));
         }
         for (Match match : serverData.getMatches()) {
             if (match.getMatchID() == ID) {
-                message.put("success", "true");
                 end = match;
                 break;
             }
         }
         if (end == null) {
-            message.put("success", "false");
-            message.put("reason", "there is no match with ID " + ID);
-            return message.toString();
+            return OCMessageFactory.toXml(new FailureResponse("there is no match with ID " + ID));
         }
         if (end.isAcknowledgeEnd()) {
             moves = end.getBoard().getMoves().size();
@@ -710,13 +580,12 @@ public class OCProtocol {
             user.increment("gamesLost");
             serverData.addToArchive(end.endMatch(loser, winner, moves));
             serverData.removeMatch(end);
-            message.put("ID", String.valueOf(serverData.getArchive().size()));
+            return OCMessageFactory.toXml(new EndMatchSuccessResponse(true, String.valueOf(serverData.getArchive().size())));
         }
         else {
             end.setAcknowledgeEnd(true);
+            return OCMessageFactory.toXml(new EndMatchSuccessResponse(true, null));
         }
-
-        return message.toString();
     }
 
     // Helper method to grab an invite between users
@@ -747,128 +616,105 @@ public class OCProtocol {
         return null;
     }
 
-    private String getGameRecords(OCMessage receivedMessage) {
-        String user = receivedMessage.get("user");
-        message = new OCMessage();
+    private String getGameRecords(GetGameRecordsRequest request) {
+        String user = request.getUser();
 
         if (!serverData.profileExists(user)){
             // target user doesn't exist
-            message.put("success", "false");
-            message.put("reason", "target user doesn't exist");
-
             System.out.println("Target user doesn't exist");
-            return message.toString();
+            return OCMessageFactory.toXml(new FailureResponse("target user doesn't exist"));
         }
 
-        message.put("success", "true");
-
+        List<GameRecordEntry> entries = new ArrayList<GameRecordEntry>();
         int countForUser = 0;
         for( GameRecord record : serverData.getArchive()){
             ArrayList<String> players = record.getPlayers();
 
             if(user.equals(players.get(0)) || user.equals(players.get(1)))
             {
+                String opponent;
                 if(user.equals(players.get(0)))
                 {
-                    message.put("user" + (countForUser + 1), players.get(1));
+                    opponent = players.get(1);
                 }
                 else
                 {
-                    message.put("user" + (countForUser + 1), players.get(0));
+                    opponent = players.get(0);
                 }
 
+                String result;
                 if(record.isDraw())
                 {
-                    message.put("result" + (countForUser + 1), "tie");
+                    result = "tie";
                 }
                 else
                 {
-                    message.put("result" + (countForUser + 1), record.getWinner());
+                    result = record.getWinner();
                 }
 
-                message.put("moves" + (countForUser + 1), String.valueOf(record.getNumMoves()));
+                entries.add(new GameRecordEntry(opponent, result, record.getNumMoves()));
                 countForUser++;
             }
         }
-        message.put("number", "" + countForUser);
 
-        return message.toString();
+        return OCMessageFactory.toXml(new GameRecordsSuccessResponse(true, countForUser, entries));
     }
 
-    private String checkCheckmate(OCMessage receivedMessage) {
-        int ID = Integer.valueOf(receivedMessage.get("ID"));
-        message = new OCMessage();
+    private String checkCheckmate(CheckCheckmateRequest request) {
+        int ID = request.getId();
 
         Match match = null;
         if (serverData.getMatches().size() == 0){
-            message.put("success", "false");
-            message.put("reason", "There are no matches available");
-            return message.toString();
+            return OCMessageFactory.toXml(new FailureResponse("There are no matches available"));
         }
         for (Match m : serverData.getMatches()){
             if (m.getMatchID() == ID) {
-                message.put("success", "true");
                 match = m;
                 break;
             }
         }
         if (match == null){
-            message.put("success", "false");
-            message.put("reason", "there is no match with ID " + ID);
-            return message.toString();
+            return OCMessageFactory.toXml(new FailureResponse("there is no match with ID " + ID));
         }
         String p1 = match.getProfile1();
         String p2 = match.getProfile2();
         boolean inCheckmate = match.checkCheckmate();
 
         if (inCheckmate) {
-            message.put("checkmate", "true");
+            String loser;
+            String winner;
             if (p1.equals(match.getBoard().getTurn().getCurrentTurnPlayer())) {
-                message.put("loser", p1);
-                message.put("winner", p2);
+                loser = p1;
+                winner = p2;
             }
             else {
-                message.put("loser", p2);
-                message.put("winner", p1);
+                loser = p2;
+                winner = p1;
             }
+            return OCMessageFactory.toXml(new CheckmateSuccessResponse(true, true, loser, winner));
         }
         else {
-            message.put("checkmate", "false");
+            return OCMessageFactory.toXml(new CheckmateSuccessResponse(true, false, null, null));
         }
-
-        return message.toString();
     }
 
-    private String checkForfeit(OCMessage receivedMessage) {
-        int ID = Integer.valueOf(receivedMessage.get("ID"));
-        message = new OCMessage();
+    private String checkForfeit(CheckForfeitRequest request) {
+        int ID = request.getId();
 
         Match match = null;
         if (serverData.getMatches().size() == 0){
-            message.put("success", "false");
-            message.put("reason", "There are no matches available");
-            return message.toString();
+            return OCMessageFactory.toXml(new FailureResponse("There are no matches available"));
         }
         for (Match m : serverData.getMatches()){
             if (m.getMatchID() == ID) {
-                message.put("success", "true");
                 match = m;
                 break;
             }
         }
         if (match == null){
-            message.put("success", "false");
-            message.put("reason", "there is no match with ID " + ID);
-            return message.toString();
+            return OCMessageFactory.toXml(new FailureResponse("there is no match with ID " + ID));
         }
 
-        if (match.isAcknowledgeEnd()) {
-            message.put("forfeit", "true");
-        }
-        else {
-            message.put("forfeit", "false");
-        }
-
-        return message.toString();
+        return OCMessageFactory.toXml(new ForfeitSuccessResponse(true, match.isAcknowledgeEnd()));
     }
 }
