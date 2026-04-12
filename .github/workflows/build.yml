@@ -21,14 +21,30 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
 
+      - name: Install asn1c
+        run: sudo apt-get update && sudo apt-get install -y asn1c
+
+      - name: Validate ASN.1 schema
+        run: |
+          mkdir -p /tmp/asn1-validate
+          cd /tmp/asn1-validate
+          asn1c -fcompound-names -fincludes-quoted -gen-PER -pdu=all \
+            $GITHUB_WORKSPACE/omega-chess.asn
+          echo "ASN.1 schema validated successfully"
+
+      - name: Build native codec (libasn1omega)
+        run: cd asn1 && make
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Compile all modules
         run: ./gradlew clean classes testClasses
 
-      - name: Run tests
-        run: ./gradlew test
+      - name: Run tests (with native codec)
+        run: LD_LIBRARY_PATH=$GITHUB_WORKSPACE/asn1 ./gradlew test
+        env:
+          LD_LIBRARY_PATH: ${{ github.workspace }}/asn1
 
       - name: Build JARs
         run: ./gradlew build

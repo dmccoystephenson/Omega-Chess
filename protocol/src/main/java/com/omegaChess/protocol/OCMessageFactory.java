@@ -51,8 +51,22 @@ public final class OCMessageFactory {
         parent.appendChild(el);
     }
 
+    /**
+     * Add a BOOLEAN element in ASN.1 XER format: {@code <tag><true/></tag>}
+     * or {@code <tag><false/></tag>}.
+     */
     private static void addBool(Document doc, Element parent, String tag, boolean value) {
-        addText(doc, parent, tag, Boolean.toString(value));
+        Element el = doc.createElement(tag);
+        el.appendChild(doc.createElement(value ? "true" : "false"));
+        parent.appendChild(el);
+    }
+
+    /**
+     * Add a SuccessFlag (ENUMERATED) element — same XER representation as
+     * BOOLEAN: {@code <tag><true/></tag>} or {@code <tag><false/></tag>}.
+     */
+    private static void addSuccessFlag(Document doc, Element parent, String tag, boolean value) {
+        addBool(doc, parent, tag, value);
     }
 
     private static void addInt(Document doc, Element parent, String tag, int value) {
@@ -93,9 +107,19 @@ public final class OCMessageFactory {
         return child != null ? child.getTextContent() : null;
     }
 
+    /**
+     * Read a BOOLEAN or ENUMERATED value.  Supports both ASN.1 XER format
+     * ({@code <tag><true/></tag>}) and plain-text format ({@code <tag>true</tag>}).
+     */
     private static boolean getBool(Element parent, String tag) {
-        String v = getText(parent, tag);
-        return v != null && Boolean.parseBoolean(v);
+        Element child = directChild(parent, tag);
+        if (child == null) return false;
+        // ASN.1 XER format: <tag><true/></tag> or <tag><false/></tag>
+        if (directChild(child, "true") != null) return true;
+        if (directChild(child, "false") != null) return false;
+        // Plain-text fallback: <tag>true</tag>
+        String v = child.getTextContent();
+        return v != null && Boolean.parseBoolean(v.trim());
     }
 
     private static int getInt(Element parent, String tag) {

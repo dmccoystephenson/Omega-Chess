@@ -26,7 +26,7 @@ final class NativeAsn1Codec {
      * JNA interface mapping the C symbols exported by libasn1omega.
      */
     interface Asn1OmegaLib extends Library {
-        Pointer ocmsg_xer_to_uper(String pduType, String xerXml, int xerLen, IntByReference outLen);
+        Pointer ocmsg_xer_to_uper(String pduType, Pointer xerXml, int xerLen, IntByReference outLen);
         Pointer ocmsg_uper_to_xer(String pduType, Pointer uperBytes, int uperLen, IntByReference outLen);
         void ocmsg_free(Pointer ptr);
     }
@@ -74,8 +74,12 @@ final class NativeAsn1Codec {
         ensureLoaded();
         if (!available) return null;
 
+        byte[] xmlBytes = xerXml.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        com.sun.jna.Memory xmlMem = new com.sun.jna.Memory(xmlBytes.length);
+        xmlMem.write(0, xmlBytes, 0, xmlBytes.length);
+
         IntByReference outLen = new IntByReference(0);
-        Pointer result = lib.ocmsg_xer_to_uper(pduType, xerXml, xerXml.length(), outLen);
+        Pointer result = lib.ocmsg_xer_to_uper(pduType, xmlMem, xmlBytes.length, outLen);
         if (result == null) return null;
 
         try {
@@ -106,7 +110,8 @@ final class NativeAsn1Codec {
 
         try {
             int len = outLen.getValue();
-            return result.getString(0, "UTF-8").substring(0, len);
+            byte[] xmlBytes = result.getByteArray(0, len);
+            return new String(xmlBytes, java.nio.charset.StandardCharsets.UTF_8);
         } finally {
             lib.ocmsg_free(result);
         }
