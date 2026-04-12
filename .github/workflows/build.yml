@@ -42,12 +42,12 @@ jobs:
         run: ./gradlew clean classes testClasses
 
       - name: Run tests (with native codec)
-        run: LD_LIBRARY_PATH=$GITHUB_WORKSPACE/asn1 ./gradlew test
+        run: ./gradlew test
         env:
           LD_LIBRARY_PATH: ${{ github.workspace }}/asn1
 
       - name: Build JARs
-        run: ./gradlew build
+        run: ./gradlew build -x test
 
       - name: Upload test results
         if: always()

@@ -53,4 +53,4 @@ generate:
 	@echo "=== asn1c generation complete ==="
 
 clean:
-	rm -f $(LIBRARY) *.o
+	rm -f $(LIBRARY) *.o $(GENDIR)/*.o
