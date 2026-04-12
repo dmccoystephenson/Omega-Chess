@@ -2,6 +2,9 @@ package com.csc14.runtimeterrors.game;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Screen;
 import com.csc14.runtimeterrors.game.BoardAssets.MatchScreen;
+import com.omegaChess.protocol.Result;
+import com.omegaChess.protocol.messages.NotificationRecord;
+import com.omegaChess.protocol.messages.NotificationsSuccessResponse;
 
 import javax.swing.*;
 import java.text.SimpleDateFormat;
@@ -93,19 +96,21 @@ public class OmegaChess extends Game {
 		int messageCount = 0;
 		if(client != null)
 		{
-			OCMessage receivedMessage = client.getNotifications(user);	// get the notifications from the user
-			System.out.println(receivedMessage.get("success"));
-			if(receivedMessage.get("success").equals("true")) {
-				int num_messages = Integer.parseInt(receivedMessage.get("count"));
+			Result<NotificationsSuccessResponse> result = client.getNotifications(user);
+			System.out.println(result.isSuccess());
+			if(result.isSuccess()) {
+				int num_messages = result.getSuccess().getCount();
 				StringBuilder message = new StringBuilder();
 
-				for (int i = 0; i < num_messages; i++) {
-					Date date = getDateFromString(receivedMessage.get("datestring" + (i + 1)));
+				java.util.List<NotificationRecord> notifications = result.getSuccess().getNotifications();
+				for (int i = 0; i < notifications.size(); i++) {
+					NotificationRecord n = notifications.get(i);
+					Date date = getDateFromString(n.getDateString());
 					if (date.compareTo(currentDate) > 0) {
 						currentDate = date;    // update current date
 						messageCount += 1;
 
-						message.append(receivedMessage.get("message" + (i + 1)));
+						message.append(n.getMessage());
 					}
 				}
 

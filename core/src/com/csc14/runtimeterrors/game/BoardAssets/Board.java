@@ -1,7 +1,10 @@
 package com.csc14.runtimeterrors.game.BoardAssets;
 
 import com.badlogic.gdx.graphics.Texture;
-import com.csc14.runtimeterrors.game.OCMessage;
+import com.omegaChess.protocol.Result;
+import com.omegaChess.protocol.messages.BoardDataSuccessResponse;
+import com.omegaChess.protocol.messages.LegalMovesSuccessResponse;
+import com.omegaChess.protocol.messages.PieceEntry;
 import com.csc14.runtimeterrors.game.OmegaChess;
 
 import java.awt.*;
@@ -217,20 +220,22 @@ public class Board {
     }
 
     public void populateBoard(){
-        OCMessage message = parent.getClient().getBoardData(matchID);
-        ArrayList<String> locations = message.getKeys();
-        locations.remove("success");
-        for (String loc : locations){
-            int[] pos = parsePosition(loc);
-            String piece = message.get(loc);
-            Color color;
-            if (piece.contains("white")){
-                color = Color.WHITE;
-            }else{
-                color = Color.BLACK;
-            }
+        Result<BoardDataSuccessResponse> result = parent.getClient().getBoardData(matchID);
+        if (result.isSuccess()) {
+            BoardDataSuccessResponse boardData = result.getSuccess();
+            for (PieceEntry entry : boardData.getPieces()) {
+                String loc = entry.getPosition();
+                String piece = entry.getPiece();
+                int[] pos = parsePosition(loc);
+                Color color;
+                if (piece.contains("white")){
+                    color = Color.WHITE;
+                }else{
+                    color = Color.BLACK;
+                }
 
-            gameBoard.get(pos[0]).get(pos[1]).setPiece(piece, color);
+                gameBoard.get(pos[0]).get(pos[1]).setPiece(piece, color);
+            }
         }
     }
 
@@ -260,8 +265,8 @@ public class Board {
     {
         if(clickedPiece != null)
         {
-            OCMessage receivedMessage = parent.getClient().getLegalMoves(matchID, clickedPiece.getPosition());
-            List<String> legalMoves = GameBoardHelpers.parseLegalMoves(receivedMessage);
+            Result<LegalMovesSuccessResponse> result = parent.getClient().getLegalMoves(matchID, clickedPiece.getPosition());
+            List<String> legalMoves = GameBoardHelpers.parseLegalMoves(result.getSuccess().getLegalMoves());
             return legalMoves;
         }
         return null;

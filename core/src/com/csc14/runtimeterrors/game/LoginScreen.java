@@ -10,6 +10,9 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 
+import com.omegaChess.protocol.Result;
+import com.omegaChess.protocol.messages.SimpleSuccessResponse;
+
 import javax.swing.*;
 
 public class LoginScreen implements Screen {
@@ -118,20 +121,20 @@ public class LoginScreen implements Screen {
                 }
 
                 // 2. send login request
-                OCMessage receivedMessage = parent.getClient().sendLoginRequest(nickname, password);
-                if (receivedMessage.get("success").equals("true")) {
+                Result<SimpleSuccessResponse> result = parent.getClient().sendLoginRequest(nickname, password);
+                if (result.isSuccess()) {
                     parent.setUser(nickname);
                     parent.changeScreen(OmegaChess.SCREEN.LOBBY); // go to lobby screen if successful
                 }
                 else {
                     // if nickname didn't exist, alert user
-                    if (receivedMessage.get("reason").equals("nickname wasn't found")) {
+                    if (result.getReason().equals("nickname wasn't found")) {
                         String errorMsg = "Error! Nickname wasn't found!";
                         JOptionPane.showMessageDialog(null, errorMsg, "Login Error!", JOptionPane.ERROR_MESSAGE);
                     }
 
                     // if password was wrong, alert user
-                    if (receivedMessage.get("reason").equals("wrong password")) {
+                    if (result.getReason().equals("wrong password")) {
                         String errorMsg = "Error! Wrong Password!";
                         JOptionPane.showMessageDialog(null, errorMsg, "Login Error!", JOptionPane.ERROR_MESSAGE);
                     }
