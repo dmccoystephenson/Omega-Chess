@@ -1,14 +1,15 @@
 # ---------------------------------------------------------
-# Makefile for libasn1omega – Omega Chess ASN.1 codec
+# Makefile for libasn1omega – Omega Chess ASN.1 native codec
 #
 # Prerequisites:
-#   asn1c (mouse07410/asn1c fork) installed and on PATH
 #   gcc, make
+#   asn1c (only needed for the 'generate' target to regenerate
+#          C sources; pre-generated sources are checked in)
 #
 # Targets:
-#   all          – generate C sources and build shared lib
-#   generate     – run asn1c on omega-chess.asn
-#   clean        – remove generated sources and library
+#   all          – build shared library from checked-in generated sources
+#   generate     – (re)run asn1c on omega-chess.asn (requires asn1c on PATH)
+#   clean        – remove generated library and object files
 # ---------------------------------------------------------
 
 SCHEMA    := ../omega-chess.asn
@@ -30,34 +31,26 @@ endif
 
 LIBRARY := $(LIBNAME).$(SOEXT)
 
-# All generated .c files plus the shim
-GEN_SRCS := $(wildcard $(GENDIR)/*.c)
-SHIM_SRC := shim.c
-SRCS     := $(GEN_SRCS) $(SHIM_SRC)
-OBJS     := $(SRCS:.c=.o)
-
 CFLAGS   := -fPIC -I$(GENDIR) -Wall -O2
 LDFLAGS  := $(SOFLAGS)
 
 .PHONY: all generate clean
 
-all: generate $(LIBRARY)
+# Build the shared library from pre-generated C sources + shim.
+# Uses shell globbing so the wildcard resolves at recipe time.
+all: $(LIBRARY)
 
+$(LIBRARY):
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(GENDIR)/*.c shim.c
+
+# Regenerate C sources from the ASN.1 schema (requires asn1c).
+# The generated sources are checked in, so this target is only
+# needed when omega-chess.asn changes.
 generate:
 	@echo "=== Running asn1c on $(SCHEMA) ==="
 	mkdir -p $(GENDIR)
-	cd $(GENDIR) && asn1c -fcompound-names -fincludes-quoted -pdu=all ../$(SCHEMA)
+	cd $(GENDIR) && asn1c -fcompound-names -fincludes-quoted -gen-PER -pdu=all ../$(SCHEMA)
 	@echo "=== asn1c generation complete ==="
 
-$(LIBRARY): $(SRCS)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(SRCS)
-
-$(GENDIR)/%.o: $(GENDIR)/%.c
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-shim.o: shim.c
-	$(CC) $(CFLAGS) -c -o $@ $<
-
 clean:
-	rm -rf $(GENDIR)/*
 	rm -f $(LIBRARY) *.o

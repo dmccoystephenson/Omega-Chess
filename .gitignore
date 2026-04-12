@@ -116,3 +116,11 @@ Thumbs.db
 
 # Build output
 **/build/
+
+# Native ASN.1 codec build artifacts
+asn1/*.so
+asn1/*.dylib
+asn1/*.dll
+asn1/*.o
+asn1/generated/converter-sample.c
+asn1/generated/Makefile.am.sample

@@ -1,8 +1,14 @@
 # Supported Server Requests
 
 All messages are encoded using UPER (Unaligned Packed Encoding Rules) as defined by
-the ASN.1 schema in `omega-chess.asn`. Each message is UPER-encoded to binary, then
-Base64-encoded for TCP text-line transport via `println()`/`readLine()`.
+the ASN.1 schema in `omega-chess.asn`. Each message is framed as a 1-byte type tag
+followed by the UPER-encoded field payload, then Base64-encoded for TCP text-line
+transport via `println()`/`readLine()`.
+
+When the native `libasn1omega` shared library is available (built from asn1c-generated
+C sources via `asn1/Makefile`), `OCCodec` delegates UPER encoding/decoding to the
+native library through JNA. Otherwise, the pure-Java `OCUperCodec` is used as a
+fallback. Both paths produce the same wire format.
 
 **Design decision:** The `process` string field from the original key-value protocol
 has been removed. Message type is now implicit in the CHOICE tag, making it redundant.

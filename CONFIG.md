@@ -66,45 +66,57 @@ The project is composed of the following Gradle modules, configured in `settings
 | `core` | Shared game logic and libGDX screens |
 | `desktop` | Desktop launcher (LWJGL backend) |
 | `server` | Multi-threaded game server |
-| `protocol` | Typed protocol message POJOs and XER XML codec |
+| `protocol` | Typed protocol message POJOs, UPER codec, and JNA native binding |
 | `ios` | iOS launcher (RoboVM backend) |
 | `tests` | Test module for project verification and automated checks |
 
-## Building the ASN.1 Codec (Optional)
+## Building the ASN.1 Native Codec
 
-The protocol is formally defined in `omega-chess.asn` at the repository root. A
-pure-Java UPER codec (`OCUperCodec`) is included in the `protocol` module and is
-used at runtime via `OCCodec`. Messages are UPER-encoded to binary, then
-Base64-encoded for TCP text-line transport.
+The protocol is formally defined in `omega-chess.asn` at the repository root. The
+`protocol` module includes both a pure-Java UPER codec (`OCUperCodec`) and a JNA
+binding to the native C codec (`libasn1omega`) built from asn1c-generated sources.
+
+At runtime, `OCCodec` attempts to load `libasn1omega` via JNA. When the native
+library is available, encoding and decoding are delegated to asn1c's UPER
+implementation through `NativeAsn1Codec`. When the library is not found, the
+codec falls back transparently to the pure-Java `OCUperCodec`.
 
 An XER XML codec (`OCMessageFactory`) is also available for debugging/logging
-purposes. The steps below are only required if you wish to build the optional
-native C codec (`libasn1omega`) from asn1c-generated sources.
+purposes and is used as the intermediate format for the native codec path
+(POJO → XER XML → native UPER encode, and reverse for decode).
 
 ### Prerequisites
 
 - gcc
 - make
-- autoconf, automake, libtool
-- [asn1c (mouse07410 fork)](https://github.com/mouse07410/asn1c)
+- [asn1c](https://github.com/mouse07410/asn1c) — only needed to regenerate C
+  sources (pre-generated sources are checked in under `asn1/generated/`)
 
 ### Build Steps
 
 ```bash
-# 1. Clone and install the asn1c compiler
-git clone https://github.com/mouse07410/asn1c.git
-cd asn1c && autoreconf -iv && ./configure && make && sudo make install
-cd ..
-
-# 2. Generate C sources from the ASN.1 schema
+# Build the shared library from the checked-in generated sources
 cd asn1
-make generate
-
-# 3. Build the shared library
 make
 
-# 4. The shared library (libasn1omega.so / .dylib / .dll) is now in asn1/
+# The shared library (libasn1omega.so / .dylib / .dll) is now in asn1/
 ```
 
-Once built, update `OCCodec.java` to load the native library via JNA instead
-of delegating to the pure-Java `OCMessageFactory`.
+To regenerate the C sources after modifying `omega-chess.asn`:
+
+```bash
+# Requires asn1c on PATH
+cd asn1
+make generate
+make
+```
+
+### Using the Native Library
+
+Place `libasn1omega.so` (or `.dylib` / `.dll`) on the JNA library search path
+(e.g., `java.library.path`, `LD_LIBRARY_PATH`, or the working directory).
+`OCCodec` will automatically detect and use it. Verify with:
+
+```java
+boolean nativeActive = OCCodec.isNativeAvailable();
+```
