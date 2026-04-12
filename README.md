@@ -60,7 +60,7 @@ If you see `BUILD SUCCESSFUL`, the tests have passed.
 
 ### Prerequisites
 
-- Java JDK 8 or higher
+- Java JDK 8 or 11
 - [IntelliJ IDEA](https://www.jetbrains.com/idea/) (recommended) or another Java IDE
 
 ### Setup

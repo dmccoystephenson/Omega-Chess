@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Java JDK 8 or higher installed on your system
+- Java JDK 8 or 11 installed on your system
 - The Omega Chess project built from source (see [README](README.md#installation))
 
 ## First Steps

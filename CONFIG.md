@@ -51,10 +51,10 @@ The desktop client accepts a command-line argument to control which server it co
 
 ```
 # Connect to local server
-java -jar desktop.jar true
+./gradlew desktop:run --args='true'
 
 # Connect to production server
-java -jar desktop.jar
+./gradlew desktop:run
 ```
 
 ## Project Modules
