@@ -120,3 +120,60 @@ Place `libasn1omega.so` (or `.dylib` / `.dll`) on the JNA library search path
 ```java
 boolean nativeActive = OCCodec.isNativeAvailable();
 ```
+
+## Docker
+
+A `Dockerfile` and `compose.yml` are provided to build and run the server in a container. The image uses a multi-stage build: the first stage compiles the server JAR and the native ASN.1 codec (`libasn1omega.so`), and the second stage produces a minimal runtime image.
+
+### Quick Start
+
+```bash
+# 1. Copy the sample environment file
+cp sample.env .env
+
+# 2. (Optional) Edit .env to change the host port
+#    SERVER_PORT=8484
+
+# 3. Start the server
+docker compose up -d
+
+# 4. View logs
+docker compose logs -f server
+
+# 5. Stop the server
+docker compose down
+```
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SERVER_PORT` | `8484` | TCP port exposed on the Docker host |
+
+See `sample.env` for the template.
+
+### Data Persistence
+
+Server data (user profiles, matches, game records) is stored in a Docker named volume `server-data` mounted at `/app/server-data`. The volume survives container restarts and rebuilds. To reset all data, remove the volume:
+
+```bash
+docker compose down -v
+```
+
+### Building Manually
+
+```bash
+# Build the image without Compose
+docker build -t omega-chess-server .
+
+# Run the container
+docker run -d -p 8484:8484 -v omega-chess-data:/app/server-data omega-chess-server
+```
+
+### Connecting the Desktop Client
+
+Pass `true` as a program argument to the desktop launcher to connect to a local server (the containerized server is accessible on `localhost`):
+
+```bash
+./gradlew desktop:run --args='true'
+```
