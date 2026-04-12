@@ -1,8 +1,8 @@
 # Commands Reference
 
-Omega Chess uses a client-server architecture. The desktop client communicates with the server via `key=value,` delimited messages over a socket connection (see `OCMessage` in the source). Below is a reference of all supported server requests.
+Omega Chess uses a client-server architecture. The desktop client communicates with the server via XER XML messages over a TCP socket connection (see `omega-chess.asn` for the formal schema and `OCMessageFactory` for the Java codec). Below is a reference of all supported server requests.
 
-For full request/response message templates, see [protocol.md](protocol.md).
+For full request/response message templates with XER XML examples, see [protocol.md](protocol.md).
 
 ## Account Commands
 
@@ -10,25 +10,37 @@ For full request/response message templates, see [protocol.md](protocol.md).
 
 **Description:** Registers a new user account.
 **Parameters:** `email`, `nickname`, `password`
-**Example:** `process=register,email=user@example.com,nickname=player1,password=secret,`
+**Example:**
+```xml
+<RegisterRequest><email>user@example.com</email><nickname>player1</nickname><password>secret</password></RegisterRequest>
+```
 
 ### Unregister
 
 **Description:** Removes a registered user account.
 **Parameters:** `nickname`
-**Example:** `process=unregister,nickname=player1,`
+**Example:**
+```xml
+<UnregisterRequest><nickname>player1</nickname></UnregisterRequest>
+```
 
 ### Login
 
 **Description:** Authenticates a user.
 **Parameters:** `nickname`, `password`
-**Example:** `process=login,nickname=player1,password=secret,`
+**Example:**
+```xml
+<LoginRequest><nickname>player1</nickname><password>secret</password></LoginRequest>
+```
 
 ### Get Profile Data
 
 **Description:** Retrieves a user's profile statistics (wins, losses, ties).
 **Parameters:** `nickname`
-**Example:** `process=get profile data,nickname=player1,`
+**Example:**
+```xml
+<GetProfileDataRequest><nickname>player1</nickname></GetProfileDataRequest>
+```
 
 ## Invitation Commands
 
@@ -36,75 +48,111 @@ For full request/response message templates, see [protocol.md](protocol.md).
 
 **Description:** Sends a game invitation to another user.
 **Parameters:** `inviter`, `invitee`
-**Example:** `process=invite,inviter=player1,invitee=player2,`
+**Example:**
+```xml
+<SendInviteRequest><inviter>player1</inviter><invitee>player2</invitee></SendInviteRequest>
+```
 
 ### Get Sent Invites
 
 **Description:** Returns all invitations sent by a user.
 **Parameters:** `user`
-**Example:** `process=invites sent,user=player1,`
+**Example:**
+```xml
+<GetInvitesSentRequest><user>player1</user></GetInvitesSentRequest>
+```
 
 ### Get Received Invites
 
 **Description:** Returns all invitations received by a user.
 **Parameters:** `user`
-**Example:** `process=invites received,user=player1,`
+**Example:**
+```xml
+<GetInvitesReceivedRequest><user>player1</user></GetInvitesReceivedRequest>
+```
 
 ### Invite Response
 
 **Description:** Accepts or declines an invitation. If accepted, a new match is created.
 **Parameters:** `response` (`accept` or `decline`), `inviter`, `invitee`
-**Example:** `process=invite response,response=accept,inviter=player1,invitee=player2,`
+**Example:**
+```xml
+<InviteResponseRequest><response>accept</response><inviter>player1</inviter><invitee>player2</invitee></InviteResponseRequest>
+```
 
 ## Match Commands
 
 ### Get Board Data
 
 **Description:** Returns the current board state (piece positions) for a match.
-**Parameters:** `ID` (match ID)
-**Example:** `process=get board data,ID=1,`
+**Parameters:** `id` (match ID)
+**Example:**
+```xml
+<GetBoardDataRequest><id>1</id></GetBoardDataRequest>
+```
 
 ### Get Legal Moves
 
 **Description:** Returns the legal moves for a piece at a given board position.
 **Parameters:** `matchID`, `row` (0–11), `column` (0–11)
-**Example:** `process=get legal moves,matchID=1,row=3,column=4,`
+**Example:**
+```xml
+<GetLegalMovesRequest><matchID>1</matchID><row>3</row><column>4</column></GetLegalMovesRequest>
+```
 
 ### Match Move
 
 **Description:** Executes a move on the board.
 **Parameters:** `matchID`, `fromRow`, `fromColumn`, `toRow`, `toColumn`
-**Example:** `process=match move,matchID=1,fromRow=1,fromColumn=3,toRow=3,toColumn=3,`
+**Example:**
+```xml
+<MatchMoveRequest><matchID>1</matchID><fromRow>1</fromRow><fromColumn>3</fromColumn><toRow>3</toRow><toColumn>3</toColumn></MatchMoveRequest>
+```
 
 ### Get In-Progress Matches
 
 **Description:** Returns all active matches for a user.
 **Parameters:** `nickname`
-**Example:** `process=get in-progress matches,nickname=player1,`
+**Example:**
+```xml
+<GetInProgressMatchesRequest><nickname>player1</nickname></GetInProgressMatchesRequest>
+```
 
 ### Get Turn
 
 **Description:** Returns whose turn it is and the turn colour.
-**Parameters:** `ID` (match ID)
-**Example:** `process=get turn,ID=1,`
+**Parameters:** `id` (match ID)
+**Example:**
+```xml
+<GetTurnRequest><id>1</id></GetTurnRequest>
+```
 
 ### Check Checkmate
 
 **Description:** Checks if the current turn player is in checkmate.
-**Parameters:** `ID` (match ID)
-**Example:** `process=checkmate check,ID=1,`
+**Parameters:** `id` (match ID)
+**Example:**
+```xml
+<CheckCheckmateRequest><id>1</id></CheckCheckmateRequest>
+```
 
 ### Check Forfeit
 
 **Description:** Checks if the other player has forfeited the match.
-**Parameters:** `ID` (match ID)
-**Example:** `process=forfeit check,ID=1,`
+**Parameters:** `id` (match ID)
+**Example:**
+```xml
+<CheckForfeitRequest><id>1</id></CheckForfeitRequest>
+```
 
 ### End Match
 
 **Description:** Ends a match and records the result.
-**Parameters:** `ID` (match ID), `winner`, `loser`
-**Example:** `process=end match,ID=1,winner=player1,loser=player2,`
+**Parameters:** `id` (match ID), `winner`, `loser`
+**Example:**
+```xml
+<EndMatchRequest><id>1</id><winner>player1</winner><loser>player2</loser></EndMatchRequest>
+```
 
 ## Notification Commands
 
@@ -112,7 +160,10 @@ For full request/response message templates, see [protocol.md](protocol.md).
 
 **Description:** Returns a user's notifications.
 **Parameters:** `nickname`
-**Example:** `process=get notifications,nickname=player1,`
+**Example:**
+```xml
+<GetNotificationsRequest><nickname>player1</nickname></GetNotificationsRequest>
+```
 
 ## Record Commands
 
@@ -120,4 +171,7 @@ For full request/response message templates, see [protocol.md](protocol.md).
 
 **Description:** Returns the game records of a player, including opponents, results, and move counts.
 **Parameters:** `user`
-**Example:** `process=get game records,user=player1,`
+**Example:**
+```xml
+<GetGameRecordsRequest><user>player1</user></GetGameRecordsRequest>
+```
