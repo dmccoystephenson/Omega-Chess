@@ -1,6 +1,7 @@
 package com.omegaChess.protocol;
 
 import com.sun.jna.Library;
+import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -75,7 +76,7 @@ final class NativeAsn1Codec {
         if (!available) return null;
 
         byte[] xmlBytes = xerXml.getBytes(java.nio.charset.StandardCharsets.UTF_8);
-        com.sun.jna.Memory xmlMem = new com.sun.jna.Memory(xmlBytes.length);
+        Memory xmlMem = new Memory(xmlBytes.length);
         xmlMem.write(0, xmlBytes, 0, xmlBytes.length);
 
         IntByReference outLen = new IntByReference(0);
@@ -101,7 +102,7 @@ final class NativeAsn1Codec {
         ensureLoaded();
         if (!available) return null;
 
-        com.sun.jna.Memory mem = new com.sun.jna.Memory(uperBytes.length);
+        Memory mem = new Memory(uperBytes.length);
         mem.write(0, uperBytes, 0, uperBytes.length);
 
         IntByReference outLen = new IntByReference(0);

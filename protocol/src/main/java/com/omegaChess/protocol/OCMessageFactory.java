@@ -61,14 +61,6 @@ public final class OCMessageFactory {
         parent.appendChild(el);
     }
 
-    /**
-     * Add a SuccessFlag (ENUMERATED) element — same XER representation as
-     * BOOLEAN: {@code <tag><true/></tag>} or {@code <tag><false/></tag>}.
-     */
-    private static void addSuccessFlag(Document doc, Element parent, String tag, boolean value) {
-        addBool(doc, parent, tag, value);
-    }
-
     private static void addInt(Document doc, Element parent, String tag, int value) {
         addText(doc, parent, tag, Integer.toString(value));
     }
