@@ -27,29 +27,21 @@ RUN chmod +x gradlew
 # Build the native ASN.1 codec
 RUN cd asn1 && make
 
-# Build the server and protocol JARs (skip tests — they run in CI)
-RUN ./gradlew :server:jar :protocol:jar --no-daemon
-
-# Collect runtime dependency JARs (JNA, JUnit, etc.)
-RUN mkdir -p /app/deps && \
-    find /root/.gradle/caches -name "jna-*.jar" -exec cp {} /app/deps/ \;
+# Build the server runtime distribution (skip tests — they run in CI).
+# installDist produces a lib/ directory containing the server JAR plus
+# all runtime dependencies (protocol, JNA, etc.) with stable paths.
+RUN ./gradlew :server:installDist --no-daemon
 
 # ---- Runtime stage ----
 FROM eclipse-temurin:11-jre
 
 WORKDIR /app
 
-# Copy the server JAR (version from build.gradle)
-COPY --from=build /app/server/build/libs/server-1.0.jar /app/lib/server.jar
+# Copy all runtime JARs from the Gradle install distribution
+COPY --from=build /app/server/build/install/server/lib/ /app/lib/
 
 # Copy the native codec library
 COPY --from=build /app/asn1/libasn1omega.so /app/lib/libasn1omega.so
-
-# Copy protocol JAR (server dependency, version from build.gradle)
-COPY --from=build /app/protocol/build/libs/protocol-1.0.jar /app/lib/protocol.jar
-
-# Copy runtime dependency JARs
-COPY --from=build /app/deps/*.jar /app/lib/
 
 ENV LD_LIBRARY_PATH=/app/lib
 

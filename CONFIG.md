@@ -138,7 +138,7 @@ cp sample.env .env
 docker compose up -d
 
 # 4. View logs
-docker compose logs -f server
+docker compose logs -f omega-chess-server
 
 # 5. Stop the server
 docker compose down

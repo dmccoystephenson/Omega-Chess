@@ -1,12 +1,15 @@
 plugins {
     id 'java'
+    id 'application'
 }
+
+mainClassName = 'com.omegaChess.server.OCMultiServer'
 
 jar {
     manifest {
         attributes(
                 'Class-Path': configurations.compile.collect { it.getName() }.join(' '),
-                'Main-Class': 'com.omegaChess.server.OCMultiServer'
+                'Main-Class': mainClassName
         )
     }
 }

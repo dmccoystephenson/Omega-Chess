@@ -17,16 +17,18 @@ GENDIR    := generated
 LIBNAME   := libasn1omega
 
 # Detect OS for shared library extension
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Darwin)
-    SOEXT := dylib
-    SOFLAGS := -dynamiclib
-else ifeq ($(OS),Windows_NT)
+ifeq ($(OS),Windows_NT)
     SOEXT := dll
     SOFLAGS := -shared
 else
-    SOEXT := so
-    SOFLAGS := -shared
+    UNAME_S := $(shell uname -s)
+    ifeq ($(UNAME_S),Darwin)
+        SOEXT := dylib
+        SOFLAGS := -dynamiclib
+    else
+        SOEXT := so
+        SOFLAGS := -shared
+    endif
 endif
 
 LIBRARY := $(LIBNAME).$(SOEXT)
