@@ -15,7 +15,7 @@ Omega Chess is a Java-based application for playing [Omega Chess](https://en.wik
 ### Server
 
 1. Build the project: `./gradlew build`
-2. Run the server: `java -jar server/build/libs/server-1.0.jar`
+2. Run the server: `./gradlew :server:run`
 
 ### Server (Docker)
 

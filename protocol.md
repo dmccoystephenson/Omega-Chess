@@ -14,7 +14,9 @@ fallback. Both paths produce the same wire format.
 has been removed. Message type is now implicit in the CHOICE tag, making it redundant.
 
 The XER XML representations below are shown for documentation purposes; the actual
-wire format is compact UPER binary (Base64-encoded).
+wire format is compact UPER binary (Base64-encoded). Note that BOOLEAN and ENUMERATED
+fields use ASN.1 XER self-closing tag syntax: `<field><true/></field>` or
+`<field><false/></field>` (not `<field>true</field>`).
 
 ---
 
@@ -28,12 +30,12 @@ Request:
 
 Success Response:
 ```xml
-<SquareSuccessResponse><success>true</success><answer>Square of 10 is 100</answer></SquareSuccessResponse>
+<SquareSuccessResponse><success><true/></success><answer>Square of 10 is 100</answer></SquareSuccessResponse>
 ```
 
 Failure Response:
 ```xml
-<FailureResponse><success>false</success><reason>Wrong input!</reason></FailureResponse>
+<FailureResponse><success><false/></success><reason>Wrong input!</reason></FailureResponse>
 ```
 
 ## Register
@@ -46,12 +48,12 @@ Request:
 
 Success Response:
 ```xml
-<SimpleSuccessResponse><success>true</success></SimpleSuccessResponse>
+<SimpleSuccessResponse><success><true/></success></SimpleSuccessResponse>
 ```
 
 Failure Response:
 ```xml
-<FailureResponse><success>false</success><reason>nickname/email was taken</reason></FailureResponse>
+<FailureResponse><success><false/></success><reason>nickname/email was taken</reason></FailureResponse>
 ```
 
 ## Unregister
@@ -64,12 +66,12 @@ Request:
 
 Success Response:
 ```xml
-<SimpleSuccessResponse><success>true</success></SimpleSuccessResponse>
+<SimpleSuccessResponse><success><true/></success></SimpleSuccessResponse>
 ```
 
 Failure Response:
 ```xml
-<FailureResponse><success>false</success><reason>nickname wasn't found</reason></FailureResponse>
+<FailureResponse><success><false/></success><reason>nickname wasn't found</reason></FailureResponse>
 ```
 
 ## Login
@@ -82,12 +84,12 @@ Request:
 
 Success Response:
 ```xml
-<SimpleSuccessResponse><success>true</success></SimpleSuccessResponse>
+<SimpleSuccessResponse><success><true/></success></SimpleSuccessResponse>
 ```
 
 Failure Response:
 ```xml
-<FailureResponse><success>false</success><reason>wrong password</reason></FailureResponse>
+<FailureResponse><success><false/></success><reason>wrong password</reason></FailureResponse>
 ```
 
 ## Get Profile Data
@@ -100,12 +102,12 @@ Request:
 
 Success Response:
 ```xml
-<ProfileDataSuccessResponse><success>true</success><nickname>examplenick</nickname><gamesWon>5</gamesWon><gamesLost>3</gamesLost><gamesTied>1</gamesTied></ProfileDataSuccessResponse>
+<ProfileDataSuccessResponse><success><true/></success><nickname>examplenick</nickname><gamesWon>5</gamesWon><gamesLost>3</gamesLost><gamesTied>1</gamesTied></ProfileDataSuccessResponse>
 ```
 
 Failure Response:
 ```xml
-<FailureResponse><success>false</success><reason>nickname wasn't found</reason></FailureResponse>
+<FailureResponse><success><false/></success><reason>nickname wasn't found</reason></FailureResponse>
 ```
 
 ## Send Invite
@@ -118,12 +120,12 @@ Request:
 
 Success Response:
 ```xml
-<SimpleSuccessResponse><success>true</success></SimpleSuccessResponse>
+<SimpleSuccessResponse><success><true/></success></SimpleSuccessResponse>
 ```
 
 Failure Response:
 ```xml
-<FailureResponse><success>false</success><reason>input user doesn't exist</reason></FailureResponse>
+<FailureResponse><success><false/></success><reason>input user doesn't exist</reason></FailureResponse>
 ```
 
 ## Get Sent Invites
@@ -136,12 +138,12 @@ Request:
 
 Success Response:
 ```xml
-<InviteListSuccessResponse><success>true</success><amount>2</amount><totalCount>2</totalCount><maxNicknameLength>10</maxNicknameLength><invites><InviteRecord><inviter>player1</inviter><invitee>player2</invitee><accepted>false</accepted><declined>false</declined></InviteRecord><InviteRecord><inviter>player1</inviter><invitee>player3</invitee><accepted>false</accepted><declined>false</declined></InviteRecord></invites></InviteListSuccessResponse>
+<InviteListSuccessResponse><success><true/></success><amount>2</amount><totalCount>2</totalCount><maxNicknameLength>10</maxNicknameLength><invites><InviteRecord><inviter>player1</inviter><invitee>player2</invitee><accepted><false/></accepted><declined><false/></declined></InviteRecord><InviteRecord><inviter>player1</inviter><invitee>player3</invitee><accepted><false/></accepted><declined><false/></declined></InviteRecord></invites></InviteListSuccessResponse>
 ```
 
 Failure Response:
 ```xml
-<FailureResponse><success>false</success><reason>target user doesn't exist</reason></FailureResponse>
+<FailureResponse><success><false/></success><reason>target user doesn't exist</reason></FailureResponse>
 ```
 
 ## Get Received Invites
@@ -156,7 +158,7 @@ Success Response: Same format as Get Sent Invites.
 
 Failure Response:
 ```xml
-<FailureResponse><success>false</success><reason>target user doesn't exist</reason></FailureResponse>
+<FailureResponse><success><false/></success><reason>target user doesn't exist</reason></FailureResponse>
 ```
 
 ## Get Notifications
@@ -169,12 +171,12 @@ Request:
 
 Success Response:
 ```xml
-<NotificationsSuccessResponse><success>true</success><count>2</count><notifications><NotificationRecord><event>NEW_MATCH</event><message>A match has started!</message><dateString>2024-01-15</dateString></NotificationRecord><NotificationRecord><event>MATCH_ENDED</event><message>The match has ended.</message><dateString>2024-01-16</dateString></NotificationRecord></notifications></NotificationsSuccessResponse>
+<NotificationsSuccessResponse><success><true/></success><count>2</count><notifications><NotificationRecord><event>NEW_MATCH</event><message>A match has started!</message><dateString>2024-01-15</dateString></NotificationRecord><NotificationRecord><event>MATCH_ENDED</event><message>The match has ended.</message><dateString>2024-01-16</dateString></NotificationRecord></notifications></NotificationsSuccessResponse>
 ```
 
 Failure Response:
 ```xml
-<FailureResponse><success>false</success><reason>target user doesn't exist</reason></FailureResponse>
+<FailureResponse><success><false/></success><reason>target user doesn't exist</reason></FailureResponse>
 ```
 
 ## Invite Response
@@ -187,12 +189,12 @@ Request:
 
 Success Response (accept):
 ```xml
-<InviteResponseSuccessResponse><success>true</success><matchID>42</matchID></InviteResponseSuccessResponse>
+<InviteResponseSuccessResponse><success><true/></success><matchID>42</matchID></InviteResponseSuccessResponse>
 ```
 
 Success Response (decline):
 ```xml
-<InviteResponseSuccessResponse><success>true</success></InviteResponseSuccessResponse>
+<InviteResponseSuccessResponse><success><true/></success></InviteResponseSuccessResponse>
 ```
 
 ## Get Board Data
@@ -205,12 +207,12 @@ Request:
 
 Success Response:
 ```xml
-<BoardDataSuccessResponse><success>true</success><pieces><PieceEntry><position>a1</position><piece>WR</piece></PieceEntry><PieceEntry><position>b1</position><piece>WN</piece></PieceEntry></pieces></BoardDataSuccessResponse>
+<BoardDataSuccessResponse><success><true/></success><pieces><PieceEntry><position>a1</position><piece>WR</piece></PieceEntry><PieceEntry><position>b1</position><piece>WN</piece></PieceEntry></pieces></BoardDataSuccessResponse>
 ```
 
 Failure Response:
 ```xml
-<FailureResponse><success>false</success><reason>No match found that has ID=42</reason></FailureResponse>
+<FailureResponse><success><false/></success><reason>No match found that has ID=42</reason></FailureResponse>
 ```
 
 ## Get Legal Moves
@@ -223,12 +225,12 @@ Request:
 
 Success Response:
 ```xml
-<LegalMovesSuccessResponse><success>true</success><legalMoves>/a3/a4/a5/</legalMoves><enPassant>false</enPassant></LegalMovesSuccessResponse>
+<LegalMovesSuccessResponse><success><true/></success><legalMoves>/a3/a4/a5/</legalMoves><enPassant><false/></enPassant></LegalMovesSuccessResponse>
 ```
 
 Failure Response:
 ```xml
-<FailureResponse><success>false</success><reason>no piece at specified position</reason></FailureResponse>
+<FailureResponse><success><false/></success><reason>no piece at specified position</reason></FailureResponse>
 ```
 
 ## Match Move
@@ -241,12 +243,12 @@ Request:
 
 Success Response:
 ```xml
-<SimpleSuccessResponse><success>true</success></SimpleSuccessResponse>
+<SimpleSuccessResponse><success><true/></success></SimpleSuccessResponse>
 ```
 
 Failure Response:
 ```xml
-<FailureResponse><success>false</success><reason>invalid move</reason></FailureResponse>
+<FailureResponse><success><false/></success><reason>invalid move</reason></FailureResponse>
 ```
 
 ## Get In-Progress Matches
@@ -259,7 +261,7 @@ Request:
 
 Success Response:
 ```xml
-<InProgressMatchesSuccessResponse><success>true</success><count>2</count><matches><MatchSummary><opponentNickname>opponent1</opponentNickname><matchID>42</matchID><playerIndex>1</playerIndex></MatchSummary><MatchSummary><opponentNickname>opponent2</opponentNickname><matchID>43</matchID><playerIndex>2</playerIndex></MatchSummary></matches></InProgressMatchesSuccessResponse>
+<InProgressMatchesSuccessResponse><success><true/></success><count>2</count><matches><MatchSummary><opponentNickname>opponent1</opponentNickname><matchID>42</matchID><playerIndex>1</playerIndex></MatchSummary><MatchSummary><opponentNickname>opponent2</opponentNickname><matchID>43</matchID><playerIndex>2</playerIndex></MatchSummary></matches></InProgressMatchesSuccessResponse>
 ```
 
 ## Get Turn
@@ -272,12 +274,12 @@ Request:
 
 Success Response:
 ```xml
-<TurnSuccessResponse><success>true</success><user>nickname</user><color>White</color></TurnSuccessResponse>
+<TurnSuccessResponse><success><true/></success><user>nickname</user><color>White</color></TurnSuccessResponse>
 ```
 
 Failure Response:
 ```xml
-<FailureResponse><success>false</success><reason>No match found that has ID=42</reason></FailureResponse>
+<FailureResponse><success><false/></success><reason>No match found that has ID=42</reason></FailureResponse>
 ```
 
 ## Get Game Records
@@ -290,12 +292,12 @@ Request:
 
 Success Response:
 ```xml
-<GameRecordsSuccessResponse><success>true</success><number>2</number><records><GameRecordEntry><opponentNickname>opponent1</opponentNickname><result>nickname</result><moves>45</moves></GameRecordEntry><GameRecordEntry><opponentNickname>opponent2</opponentNickname><result>tie</result><moves>60</moves></GameRecordEntry></records></GameRecordsSuccessResponse>
+<GameRecordsSuccessResponse><success><true/></success><number>2</number><records><GameRecordEntry><opponentNickname>opponent1</opponentNickname><result>nickname</result><moves>45</moves></GameRecordEntry><GameRecordEntry><opponentNickname>opponent2</opponentNickname><result>tie</result><moves>60</moves></GameRecordEntry></records></GameRecordsSuccessResponse>
 ```
 
 Failure Response:
 ```xml
-<FailureResponse><success>false</success><reason>target user doesn't exist</reason></FailureResponse>
+<FailureResponse><success><false/></success><reason>target user doesn't exist</reason></FailureResponse>
 ```
 
 ## End Match
@@ -308,17 +310,17 @@ Request:
 
 Success Response (first call — marks for completion):
 ```xml
-<EndMatchSuccessResponse><success>true</success></EndMatchSuccessResponse>
+<EndMatchSuccessResponse><success><true/></success></EndMatchSuccessResponse>
 ```
 
 Success Response (second call — archives the match):
 ```xml
-<EndMatchSuccessResponse><success>true</success><archiveID>1</archiveID></EndMatchSuccessResponse>
+<EndMatchSuccessResponse><success><true/></success><archiveID>1</archiveID></EndMatchSuccessResponse>
 ```
 
 Failure Response:
 ```xml
-<FailureResponse><success>false</success><reason>there is no match with ID 42</reason></FailureResponse>
+<FailureResponse><success><false/></success><reason>there is no match with ID 42</reason></FailureResponse>
 ```
 
 ## Check Checkmate
@@ -331,17 +333,17 @@ Request:
 
 Success Response (no checkmate):
 ```xml
-<CheckmateSuccessResponse><success>true</success><checkmate>false</checkmate></CheckmateSuccessResponse>
+<CheckmateSuccessResponse><success><true/></success><checkmate><false/></checkmate></CheckmateSuccessResponse>
 ```
 
 Success Response (checkmate):
 ```xml
-<CheckmateSuccessResponse><success>true</success><checkmate>true</checkmate><loser>losingPlayer</loser><winner>winningPlayer</winner></CheckmateSuccessResponse>
+<CheckmateSuccessResponse><success><true/></success><checkmate><true/></checkmate><loser>losingPlayer</loser><winner>winningPlayer</winner></CheckmateSuccessResponse>
 ```
 
 Failure Response:
 ```xml
-<FailureResponse><success>false</success><reason>there is no match with ID 42</reason></FailureResponse>
+<FailureResponse><success><false/></success><reason>there is no match with ID 42</reason></FailureResponse>
 ```
 
 ## Check Forfeit
@@ -354,11 +356,11 @@ Request:
 
 Success Response:
 ```xml
-<ForfeitSuccessResponse><success>true</success><forfeit>false</forfeit></ForfeitSuccessResponse>
+<ForfeitSuccessResponse><success><true/></success><forfeit><false/></forfeit></ForfeitSuccessResponse>
 ```
 
 Failure Response:
 ```xml
-<FailureResponse><success>false</success><reason>there is no match with ID 42</reason></FailureResponse>
+<FailureResponse><success><false/></success><reason>there is no match with ID 42</reason></FailureResponse>
 ```
  
