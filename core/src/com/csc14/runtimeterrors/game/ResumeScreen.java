@@ -10,6 +10,10 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 
+import com.omegaChess.protocol.Result;
+import com.omegaChess.protocol.messages.InProgressMatchesSuccessResponse;
+import com.omegaChess.protocol.messages.MatchSummary;
+
 import javax.swing.*;
 import java.util.ArrayList;
 
@@ -81,17 +85,19 @@ public class ResumeScreen implements Screen {
 
     private void listMatches() {
         // request list of matches user is in
-        OCMessage receivedMessage = parent.getClient().getResumeMatches(nickname);
+        Result<InProgressMatchesSuccessResponse> result = parent.getClient().getResumeMatches(nickname);
 
-        if (receivedMessage.get("success").equals("true")) {
-            System.out.println(receivedMessage);
-            if (Integer.parseInt(receivedMessage.get("count")) == 0){
+        if (result.isSuccess()) {
+            System.out.println(result);
+            if (result.getSuccess().getCount() == 0){
                 resumeBtn.setDisabled(false);
             }else {
-                for (int i = 1; i <= Integer.parseInt(receivedMessage.get("count")); i++) {
-                    matchOpponents.add(receivedMessage.get("opponent" + i));
-                    matchIDs.add(receivedMessage.get("ID" + i));
-                    playerIDs.add(receivedMessage.get("playerIndex" + i));
+                java.util.List<MatchSummary> matches_list = result.getSuccess().getMatches();
+                for (int i = 0; i < matches_list.size(); i++) {
+                    MatchSummary m = matches_list.get(i);
+                    matchOpponents.add(m.getOpponentNickname());
+                    matchIDs.add(String.valueOf(m.getMatchID()));
+                    playerIDs.add(String.valueOf(m.getPlayerIndex()));
                 }
 
                 if (matchOpponents.size() > 0) {

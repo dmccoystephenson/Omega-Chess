@@ -1,0 +1,33 @@
+# Build output
+**/build/
+.gradle/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.github/
+
+# Documentation and non-build files
+pictures/
+presentations/
+deliverables/
+meeting-notes/
+reports/
+
+# Native build artifacts (rebuilt inside container)
+asn1/*.so
+asn1/*.dylib
+asn1/*.dll
+asn1/*.o
+
+# Environment file (secrets)
+.env

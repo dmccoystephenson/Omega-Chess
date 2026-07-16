@@ -1,0 +1,444 @@
+OmegaChessProtocol DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+-- ─────────────────────────────────────────────
+-- Shared primitives
+-- ─────────────────────────────────────────────
+
+Nickname ::= UTF8String (SIZE (1..32))
+Password ::= UTF8String (SIZE (1..64))
+Email    ::= UTF8String (SIZE (1..128))
+MatchID  ::= INTEGER (0..MAX)
+RowCol   ::= INTEGER (0..11)       -- Omega Chess board is 12x12 incl. corner squares
+
+SuccessFlag ::= ENUMERATED { false(0), true(1) }
+
+FailureResponse ::= SEQUENCE {
+    success  SuccessFlag,   -- always false
+    reason   UTF8String
+}
+
+-- ─────────────────────────────────────────────
+-- Square (test request)
+-- ─────────────────────────────────────────────
+
+SquareRequest ::= SEQUENCE {
+    number   INTEGER
+}
+
+SquareSuccessResponse ::= SEQUENCE {
+    success  SuccessFlag,   -- always true
+    answer   UTF8String
+}
+
+SquareResponse ::= CHOICE {
+    ok       SquareSuccessResponse,
+    err      FailureResponse
+}
+
+-- ─────────────────────────────────────────────
+-- Register
+-- ─────────────────────────────────────────────
+
+RegisterRequest ::= SEQUENCE {
+    email     Email,
+    nickname  Nickname,
+    password  Password
+}
+
+RegisterResponse ::= CHOICE {
+    ok   SimpleSuccessResponse,
+    err  FailureResponse
+}
+
+SimpleSuccessResponse ::= SEQUENCE {
+    success  SuccessFlag    -- always true
+}
+
+-- ─────────────────────────────────────────────
+-- Unregister
+-- ─────────────────────────────────────────────
+
+UnregisterRequest ::= SEQUENCE {
+    nickname  Nickname
+}
+
+UnregisterResponse ::= CHOICE {
+    ok   SimpleSuccessResponse,
+    err  FailureResponse
+}
+
+-- ─────────────────────────────────────────────
+-- Login
+-- ─────────────────────────────────────────────
+
+LoginRequest ::= SEQUENCE {
+    nickname  Nickname,
+    password  Password
+}
+
+LoginResponse ::= CHOICE {
+    ok   SimpleSuccessResponse,
+    err  FailureResponse
+}
+
+-- ─────────────────────────────────────────────
+-- Get Profile Data
+-- ─────────────────────────────────────────────
+
+GetProfileDataRequest ::= SEQUENCE {
+    nickname  Nickname
+}
+
+GetProfileDataResponse ::= CHOICE {
+    ok   ProfileDataSuccessResponse,
+    err  FailureResponse
+}
+
+ProfileDataSuccessResponse ::= SEQUENCE {
+    success    SuccessFlag,
+    nickname   Nickname,
+    gamesWon   INTEGER (0..MAX),
+    gamesLost  INTEGER (0..MAX),
+    gamesTied  INTEGER (0..MAX)
+}
+
+-- ─────────────────────────────────────────────
+-- Send Invite
+-- ─────────────────────────────────────────────
+
+SendInviteRequest ::= SEQUENCE {
+    inviter  Nickname,
+    invitee  Nickname
+}
+
+SendInviteResponse ::= CHOICE {
+    ok   SimpleSuccessResponse,
+    err  FailureResponse
+}
+
+-- ─────────────────────────────────────────────
+-- Invite (shared sub-structure)
+-- ─────────────────────────────────────────────
+
+InviteRecord ::= SEQUENCE {
+    inviter   Nickname,
+    invitee   Nickname,
+    accepted  BOOLEAN,
+    declined  BOOLEAN
+}
+
+InviteList ::= SEQUENCE OF InviteRecord
+
+-- ─────────────────────────────────────────────
+-- Get Sent / Received Invites
+-- ─────────────────────────────────────────────
+
+GetInvitesSentRequest ::= SEQUENCE {
+    user     Nickname
+}
+
+GetInvitesReceivedRequest ::= SEQUENCE {
+    user     Nickname
+}
+
+InviteListResponse ::= CHOICE {
+    ok   InviteListSuccessResponse,
+    err  FailureResponse
+}
+
+InviteListSuccessResponse ::= SEQUENCE {
+    success           SuccessFlag,
+    amount            INTEGER (0..MAX),
+    totalCount        INTEGER (0..MAX),
+    maxNicknameLength INTEGER (0..MAX),
+    invites           InviteList
+}
+
+-- ─────────────────────────────────────────────
+-- Get Notifications
+-- ─────────────────────────────────────────────
+
+GetNotificationsRequest ::= SEQUENCE {
+    nickname  Nickname
+}
+
+NotificationRecord ::= SEQUENCE {
+    event       UTF8String,
+    message     UTF8String,
+    dateString  UTF8String
+}
+
+GetNotificationsResponse ::= CHOICE {
+    ok   NotificationsSuccessResponse,
+    err  FailureResponse
+}
+
+NotificationsSuccessResponse ::= SEQUENCE {
+    success        SuccessFlag,
+    count          INTEGER (0..MAX),
+    notifications  SEQUENCE OF NotificationRecord
+}
+
+-- ─────────────────────────────────────────────
+-- Invite Response
+-- ─────────────────────────────────────────────
+
+InviteResponseDecision ::= ENUMERATED { accept(0), decline(1) }
+
+InviteResponseRequest ::= SEQUENCE {
+    response  UTF8String,   -- "accept" or "decline"
+    inviter   Nickname,
+    invitee   Nickname
+}
+
+InviteResponseResponse ::= CHOICE {
+    ok   InviteResponseSuccessResponse,
+    err  FailureResponse
+}
+
+InviteResponseSuccessResponse ::= SEQUENCE {
+    success  SuccessFlag,
+    matchID  UTF8String OPTIONAL  -- present only when response = accept
+}
+
+-- ─────────────────────────────────────────────
+-- Get Board Data
+-- ─────────────────────────────────────────────
+
+GetBoardDataRequest ::= SEQUENCE {
+    id       MatchID
+}
+
+PieceEntry ::= SEQUENCE {
+    position  UTF8String,   -- algebraic coordinate string, e.g. "a1"
+    piece     UTF8String    -- piece descriptor string, e.g. "WK"
+}
+
+GetBoardDataResponse ::= CHOICE {
+    ok   BoardDataSuccessResponse,
+    err  FailureResponse
+}
+
+BoardDataSuccessResponse ::= SEQUENCE {
+    success  SuccessFlag,
+    pieces   SEQUENCE OF PieceEntry
+}
+
+-- ─────────────────────────────────────────────
+-- Get Legal Moves
+-- ─────────────────────────────────────────────
+
+GetLegalMovesRequest ::= SEQUENCE {
+    matchID  MatchID,
+    row      RowCol,
+    column   RowCol
+}
+
+GetLegalMovesResponse ::= CHOICE {
+    ok   LegalMovesSuccessResponse,
+    err  FailureResponse
+}
+
+LegalMovesSuccessResponse ::= SEQUENCE {
+    success     SuccessFlag,
+    legalMoves  UTF8String, -- slash-delimited coordinate list, e.g. "/a3/a4/a5/"
+    enPassant   BOOLEAN
+}
+
+-- ─────────────────────────────────────────────
+-- Match Move
+-- ─────────────────────────────────────────────
+
+MatchMoveRequest ::= SEQUENCE {
+    matchID     MatchID,
+    fromRow     RowCol,
+    fromColumn  RowCol,
+    toRow       RowCol,
+    toColumn    RowCol
+}
+
+MatchMoveResponse ::= CHOICE {
+    ok   SimpleSuccessResponse,
+    err  FailureResponse
+}
+
+-- ─────────────────────────────────────────────
+-- Get In-Progress Matches
+-- ─────────────────────────────────────────────
+
+GetInProgressMatchesRequest ::= SEQUENCE {
+    nickname  Nickname
+}
+
+MatchSummary ::= SEQUENCE {
+    opponentNickname  Nickname,
+    matchID           MatchID,
+    playerIndex       INTEGER (1..2)   -- 1 = white, 2 = black
+}
+
+GetInProgressMatchesResponse ::= CHOICE {
+    ok   InProgressMatchesSuccessResponse,
+    err  FailureResponse
+}
+
+InProgressMatchesSuccessResponse ::= SEQUENCE {
+    success  SuccessFlag,
+    count    INTEGER (0..MAX),
+    matches  SEQUENCE OF MatchSummary
+}
+
+-- ─────────────────────────────────────────────
+-- Get Turn
+-- ─────────────────────────────────────────────
+
+GetTurnRequest ::= SEQUENCE {
+    id       MatchID
+}
+
+GetTurnResponse ::= CHOICE {
+    ok   TurnSuccessResponse,
+    err  FailureResponse
+}
+
+TurnSuccessResponse ::= SEQUENCE {
+    success  SuccessFlag,
+    user     Nickname,
+    color    UTF8String     -- "white" or "black"
+}
+
+-- ─────────────────────────────────────────────
+-- Get Game Records
+-- ─────────────────────────────────────────────
+
+GetGameRecordsRequest ::= SEQUENCE {
+    user     Nickname
+}
+
+GameRecordEntry ::= SEQUENCE {
+    opponentNickname  Nickname,
+    result            UTF8String,   -- winner nickname or "tie"
+    moves             INTEGER (0..MAX)
+}
+
+GetGameRecordsResponse ::= CHOICE {
+    ok   GameRecordsSuccessResponse,
+    err  FailureResponse
+}
+
+GameRecordsSuccessResponse ::= SEQUENCE {
+    success  SuccessFlag,
+    number   INTEGER (0..MAX),
+    records  SEQUENCE OF GameRecordEntry
+}
+
+-- ─────────────────────────────────────────────
+-- End Match
+-- ─────────────────────────────────────────────
+
+EndMatchRequest ::= SEQUENCE {
+    id       MatchID,
+    winner   Nickname,
+    loser    Nickname
+}
+
+EndMatchResponse ::= CHOICE {
+    ok   EndMatchSuccessResponse,
+    err  FailureResponse
+}
+
+EndMatchSuccessResponse ::= SEQUENCE {
+    success    SuccessFlag,
+    archiveID  UTF8String OPTIONAL    -- present on second call (final resolution)
+}
+
+-- ─────────────────────────────────────────────
+-- Check Checkmate
+-- ─────────────────────────────────────────────
+
+CheckCheckmateRequest ::= SEQUENCE {
+    id       MatchID
+}
+
+CheckCheckmateResponse ::= CHOICE {
+    ok   CheckmateSuccessResponse,
+    err  FailureResponse
+}
+
+CheckmateSuccessResponse ::= SEQUENCE {
+    success    SuccessFlag,
+    checkmate  BOOLEAN,
+    loser      Nickname OPTIONAL,   -- present when checkmate = true
+    winner     Nickname OPTIONAL
+}
+
+-- ─────────────────────────────────────────────
+-- Check Forfeit
+-- ─────────────────────────────────────────────
+
+CheckForfeitRequest ::= SEQUENCE {
+    id       MatchID
+}
+
+CheckForfeitResponse ::= CHOICE {
+    ok   ForfeitSuccessResponse,
+    err  FailureResponse
+}
+
+ForfeitSuccessResponse ::= SEQUENCE {
+    success  SuccessFlag,
+    forfeit  BOOLEAN
+}
+
+-- ─────────────────────────────────────────────
+-- Top-level union (useful for a single dispatch point)
+--
+-- Design decision: the "process" string field from the
+-- original OCMessage protocol is dropped.  Message type
+-- is now implicit in the CHOICE alternative / XML root
+-- element, making it redundant.
+-- ─────────────────────────────────────────────
+
+OmegaChessRequest ::= CHOICE {
+    square               SquareRequest,
+    register             RegisterRequest,
+    unregister           UnregisterRequest,
+    login                LoginRequest,
+    getProfileData       GetProfileDataRequest,
+    sendInvite           SendInviteRequest,
+    getInvitesSent       GetInvitesSentRequest,
+    getInvitesReceived   GetInvitesReceivedRequest,
+    getNotifications     GetNotificationsRequest,
+    inviteResponse       InviteResponseRequest,
+    getBoardData         GetBoardDataRequest,
+    getLegalMoves        GetLegalMovesRequest,
+    matchMove            MatchMoveRequest,
+    getInProgressMatches GetInProgressMatchesRequest,
+    getTurn              GetTurnRequest,
+    getGameRecords       GetGameRecordsRequest,
+    endMatch             EndMatchRequest,
+    checkCheckmate       CheckCheckmateRequest,
+    checkForfeit         CheckForfeitRequest
+}
+
+OmegaChessResponse ::= CHOICE {
+    square               SquareResponse,
+    register             RegisterResponse,
+    unregister           UnregisterResponse,
+    login                LoginResponse,
+    getProfileData       GetProfileDataResponse,
+    sendInvite           SendInviteResponse,
+    inviteList           InviteListResponse,
+    getNotifications     GetNotificationsResponse,
+    inviteResponse       InviteResponseResponse,
+    getBoardData         GetBoardDataResponse,
+    getLegalMoves        GetLegalMovesResponse,
+    matchMove            MatchMoveResponse,
+    getInProgressMatches GetInProgressMatchesResponse,
+    getTurn              GetTurnResponse,
+    getGameRecords       GetGameRecordsResponse,
+    endMatch             EndMatchResponse,
+    checkCheckmate       CheckCheckmateResponse,
+    checkForfeit         CheckForfeitResponse
+}
+
+END

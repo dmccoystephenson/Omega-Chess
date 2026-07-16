@@ -11,6 +11,9 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 
+import com.omegaChess.protocol.Result;
+import com.omegaChess.protocol.messages.ProfileDataSuccessResponse;
+
 import javax.swing.*;
 
 public class ProfileScreen implements Screen {
@@ -165,13 +168,13 @@ public class ProfileScreen implements Screen {
         String totalGames = "-", gamesWon = "-", gamesLost = "-", gamesDraw = "-";
 
         // send request to get profile data
-        OCMessage receivedMessage = parent.getClient().sendGetProfileDataRequest(nickname);
+        Result<ProfileDataSuccessResponse> result = parent.getClient().sendGetProfileDataRequest(nickname);
 
-        if(receivedMessage.get("success").equals("true"))
+        if(result.isSuccess())
         {
-            gamesWon = receivedMessage.get("gamesWon");
-            gamesLost = receivedMessage.get("gamesLost");
-            gamesDraw = receivedMessage.get("gamesTied");
+            gamesWon = String.valueOf(result.getSuccess().getGamesWon());
+            gamesLost = String.valueOf(result.getSuccess().getGamesLost());
+            gamesDraw = String.valueOf(result.getSuccess().getGamesTied());
 
             totalGames = String.valueOf(Integer.parseInt(gamesWon) + Integer.parseInt(gamesLost) +
                     Integer.parseInt(gamesDraw));

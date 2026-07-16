@@ -3,7 +3,6 @@ package com.omegaChess.board;
 import com.omegaChess.exceptions.IllegalMoveException;
 import com.omegaChess.exceptions.IllegalPositionException;
 import com.omegaChess.pieces.*;
-import com.omegaChess.server.OCMessage;
 import com.omegaChess.server.TurnTracker;
 
 import java.io.File;
@@ -481,13 +480,14 @@ public class ChessBoard {
     }
 
     public String getPieces(){
-        OCMessage message = new OCMessage();
+        StringBuilder sb = new StringBuilder();
         for (ChessPiece piece : white_pieces){
-            message.put(piece.getPosition(), piece.toString());
-        }for (ChessPiece piece : black_pieces){
-            message.put(piece.getPosition(), piece.toString());
+            sb.append(piece.getPosition()).append("=").append(piece.toString()).append(",");
         }
-        return message.toString();
+        for (ChessPiece piece : black_pieces){
+            sb.append(piece.getPosition()).append("=").append(piece.toString()).append(",");
+        }
+        return sb.toString();
     }
 
     public TurnTracker getTurn() { return turn; }

@@ -1,10 +1,9 @@
-name: Build
+name: Build & Test
 
 on:
   push:
     branches: [ main, develop ]
   pull_request:
-    branches: [ main, develop ]
 
 permissions:
   contents: read
@@ -22,8 +21,37 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
 
+      - name: Install asn1c
+        run: sudo apt-get update && sudo apt-get install -y asn1c
+
+      - name: Validate ASN.1 schema
+        run: |
+          mkdir -p /tmp/asn1-validate
+          cd /tmp/asn1-validate
+          asn1c -fcompound-names -fincludes-quoted -gen-PER -pdu=all \
+            $GITHUB_WORKSPACE/omega-chess.asn
+          echo "ASN.1 schema validated successfully"
+
+      - name: Build native codec (libasn1omega)
+        run: cd asn1 && make
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build with Gradle
-        run: ./gradlew clean build
+      - name: Compile all modules
+        run: ./gradlew clean classes testClasses
+
+      - name: Run tests (with native codec)
+        run: ./gradlew test
+        env:
+          LD_LIBRARY_PATH: ${{ github.workspace }}/asn1
+
+      - name: Build JARs
+        run: ./gradlew build -x test
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: '**/build/test-results/test/*.xml'

@@ -1,6 +1,10 @@
 package com.csc14.runtimeterrors.game.BoardAssets;
 
-import com.csc14.runtimeterrors.game.OCMessage;
+import com.omegaChess.protocol.Result;
+import com.omegaChess.protocol.messages.CheckmateSuccessResponse;
+import com.omegaChess.protocol.messages.ForfeitSuccessResponse;
+import com.omegaChess.protocol.messages.LegalMovesSuccessResponse;
+import com.omegaChess.protocol.messages.TurnSuccessResponse;
 import com.csc14.runtimeterrors.game.OmegaChess;
 
 import javax.imageio.ImageIO;
@@ -61,7 +65,7 @@ public final class MatchScreen {
         final TimerTask tt = new TimerTask() {
             @Override
             public void run() {
-                if(!chessBoard.getTurn().equals(parent.getClient().getTurn(chessBoard.getMatchID()).get("user")))
+                if(!chessBoard.getTurn().equals(parent.getClient().getTurn(chessBoard.getMatchID()).getSuccess().getUser()))
                 {
                     setTurn();
                     turnLabel.setText("Current Turn: " + chessBoard.getTurn());
@@ -81,9 +85,9 @@ public final class MatchScreen {
     }
 
     private void setTurn(){
-        chessBoard.setTurn(parent.getClient().getTurn(chessBoard.getMatchID()).get("user"));
+        chessBoard.setTurn(parent.getClient().getTurn(chessBoard.getMatchID()).getSuccess().getUser());
         Color turnColor = null;
-        switch (parent.getClient().getTurn(chessBoard.getMatchID()).get("color")){
+        switch (parent.getClient().getTurn(chessBoard.getMatchID()).getSuccess().getColor()){
             case "WHITE":
                 turnColor = Color.WHITE;
                 break;
@@ -95,19 +99,19 @@ public final class MatchScreen {
     }
 
     private void checkCheckmate(boolean startOfOppTurn) {
-        OCMessage receivedMessage = parent.getClient().getCheckmate(chessBoard.getMatchID());
+        Result<CheckmateSuccessResponse> result = parent.getClient().getCheckmate(chessBoard.getMatchID());
 
-        if (receivedMessage.get("success").equals("true")) {
-            if (receivedMessage.get("checkmate").equals("true")) {
+        if (result.isSuccess()) {
+            if (result.getSuccess().isCheckmate()) {
                 String title = "Checkmate!";
                 String message = "";
                 if (startOfOppTurn) {
-                    message = "You put " + receivedMessage.get("loser") + " in checkmate!";
+                    message = "You put " + result.getSuccess().getLoser() + " in checkmate!";
                 } else {
-                    message = receivedMessage.get("winner") + " put you in checkmate!";
+                    message = result.getSuccess().getWinner() + " put you in checkmate!";
                 }
                 JOptionPane.showMessageDialog(null, message, title, JOptionPane.INFORMATION_MESSAGE);
-                parent.getClient().endMatch(chessBoard.getMatchID(), receivedMessage.get("winner"), receivedMessage.get("loser"));
+                parent.getClient().endMatch(chessBoard.getMatchID(), result.getSuccess().getWinner(), result.getSuccess().getLoser());
                 parent.changeScreenFromMatch();
                 gameFrame.setVisible(false);
                 gameFrame.dispose();
@@ -116,10 +120,10 @@ public final class MatchScreen {
     }
 
     private void checkForfeit() {
-        OCMessage receivedMessage = parent.getClient().getForfeit(chessBoard.getMatchID());
+        Result<ForfeitSuccessResponse> result = parent.getClient().getForfeit(chessBoard.getMatchID());
 
-        if (receivedMessage.get("success").equals("true")) {
-            if (receivedMessage.get("forfeit").equals("true")) {
+        if (result.isSuccess()) {
+            if (result.getSuccess().isForfeit()) {
                 String title = "Forfeit!";
                 String message = chessBoard.getTurn() + " has forfeit the match!";
 
@@ -236,8 +240,8 @@ public final class MatchScreen {
                                 {
                                     chessBoard.setClickedPiece(fromSquare);
 
-                                    OCMessage receivedMessage = parent.getClient().getLegalMoves(chessBoard.getMatchID(), fromSquare.getPosition());
-                                    chessBoard.setEnPessant(receivedMessage.get("enPessant").equals("true"));
+                                    Result<LegalMovesSuccessResponse> legalResult = parent.getClient().getLegalMoves(chessBoard.getMatchID(), fromSquare.getPosition());
+                                    chessBoard.setEnPessant(legalResult.getSuccess().isEnPassant());
                                 }
                             }
                             else
@@ -246,8 +250,8 @@ public final class MatchScreen {
                                 toSquare = chessBoard.getSquare(tileId);
 
                                 // get legal moves from server
-                                OCMessage receivedMessage = parent.getClient().getLegalMoves(chessBoard.getMatchID(), fromSquare.getPosition());
-                                List<String> legalMoves = GameBoardHelpers.parseLegalMoves(receivedMessage);
+                                Result<LegalMovesSuccessResponse> legalResult2 = parent.getClient().getLegalMoves(chessBoard.getMatchID(), fromSquare.getPosition());
+                                List<String> legalMoves = GameBoardHelpers.parseLegalMoves(legalResult2.getSuccess().getLegalMoves());
 
                                 int[] pos = toSquare.getPosition();
                                 if(legalMoves.contains(GameBoardHelpers.reverseParse(pos[0], pos[1])))
@@ -264,10 +268,10 @@ public final class MatchScreen {
 
                                     chessBoard.setEnPessant(false);
 
-                                    String newTurn = parent.getClient().getTurn(chessBoard.getMatchID()).get("user");
+                                    String newTurn = parent.getClient().getTurn(chessBoard.getMatchID()).getSuccess().getUser();
                                     chessBoard.setTurn(newTurn);
                                     turnLabel.setText("Current Turn: " + newTurn);
-                                    switch (parent.getClient().getTurn(chessBoard.getMatchID()).get("color")){
+                                    switch (parent.getClient().getTurn(chessBoard.getMatchID()).getSuccess().getColor()){
                                         case "White":
                                             chessBoard.setTurnColor(Color.WHITE);
                                             break;

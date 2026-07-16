@@ -10,6 +10,13 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.ui.ButtonGroup;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 
+import com.omegaChess.protocol.Result;
+import com.omegaChess.protocol.messages.InviteListSuccessResponse;
+import com.omegaChess.protocol.messages.InviteRecord;
+import com.omegaChess.protocol.messages.InviteResponseSuccessResponse;
+import com.omegaChess.protocol.messages.NotificationRecord;
+import com.omegaChess.protocol.messages.NotificationsSuccessResponse;
+
 import javax.swing.*;
 
 public class MailboxScreen implements Screen {
@@ -157,10 +164,10 @@ public class MailboxScreen implements Screen {
         mailboxTable.row();
         mailboxTable.add(new Label(label, skin));
 
-        OCMessage receivedMessage = parent.getClient().getSentInvites(nickname);
+        Result<InviteListSuccessResponse> result = parent.getClient().getSentInvites(nickname);
 
         int spacingSeparation = 30;                   // number of spaces between columns
-        int longest = Integer.parseInt(receivedMessage.get("maxNicknameLength"));  // length of the widest column
+        int longest = result.getSuccess().getMaxNicknameLength();  // length of the widest column
         int spacing = longest + spacingSeparation;
 
         String columns = String.format("%-" + spacing + "s%-" + spacing + "s",  // format
@@ -170,18 +177,18 @@ public class MailboxScreen implements Screen {
         labels.row();
         int activeCount = 1;
 
-        if(receivedMessage.get("success").equals("true"))
+        if(result.isSuccess())
         {
-            int count = Integer.parseInt(receivedMessage.get("totalCount"));
-            for(int i = 0; i < count; i++)
+            java.util.List<InviteRecord> invites = result.getSuccess().getInvites();
+            for(int i = 0; i < invites.size(); i++)
             {
+                InviteRecord invite = invites.get(i);
                 // only show in inbox if it hasn't been accepted or declined
-                if( receivedMessage.get("accepted" + i).equals("false") &&
-                        receivedMessage.get("declined" + i).equals("false"))
+                if( !invite.isAccepted() && !invite.isDeclined())
                 {
                     activeCount++;
                     String tmp = String.format("%-" + spacing + "s%-" + spacing + "s",  // format
-                            receivedMessage.get("invitee" + i), "Invite Request");
+                            invite.getInvitee(), "Invite Request");
 
                     labels.add(new Label(tmp, skin) {
 
@@ -222,10 +229,10 @@ public class MailboxScreen implements Screen {
         mailboxTable.row();
         mailboxTable.add(new Label(label, skin));
 
-        OCMessage receivedMessage = parent.getClient().getReceivedInvites(nickname);
+        Result<InviteListSuccessResponse> result = parent.getClient().getReceivedInvites(nickname);
 
         int spacingSeparation = 30;                   // number of spaces between columns
-        int longest = Integer.parseInt(receivedMessage.get("maxNicknameLength"));  // length of the widest column
+        int longest = result.getSuccess().getMaxNicknameLength();  // length of the widest column
         int spacing = longest + spacingSeparation;
 
         String columns = String.format("%-" + spacing + "s%-" + spacing + "s",  // format
@@ -236,21 +243,21 @@ public class MailboxScreen implements Screen {
 
         int activeCount = 1;
 
-        if(receivedMessage.get("success").equals("true"))
+        if(result.isSuccess())
         {
-            int count = Integer.parseInt(receivedMessage.get("totalCount"));
-            for(int i = 0; i < count; i++)
+            java.util.List<InviteRecord> invites = result.getSuccess().getInvites();
+            for(int i = 0; i < invites.size(); i++)
             {
+                InviteRecord invite = invites.get(i);
                 // only show in inbox if it hasn't been accepted or declined
-                if( receivedMessage.get("accepted" + i).equals("false") &&
-                    receivedMessage.get("declined" + i).equals("false"))
+                if( !invite.isAccepted() && !invite.isDeclined())
                 {
                     activeCount++;
-                    String message = "Invited by: " + receivedMessage.get("inviter"+i);
+                    String message = "Invited by: " + invite.getInviter();
                     String tmp = String.format("%-" + spacing + "s%-" + spacing + "s",  // format
                             "Invite Request", message);
 
-                    final String inviter = receivedMessage.get("inviter" + i);
+                    final String inviter = invite.getInviter();
 
                     Label tmpLabel = new Label(tmp, skin){
                         public void draw(Batch batch, float parentAlpha) {
@@ -269,10 +276,10 @@ public class MailboxScreen implements Screen {
                                     JOptionPane.QUESTION_MESSAGE);
                             if(result == JOptionPane.YES_OPTION){
                                 // send request to send the accept response
-                                OCMessage message = parent.getClient().acceptInvite(nickname, inviter);
+                                Result<InviteResponseSuccessResponse> acceptResult = parent.getClient().acceptInvite(nickname, inviter);
                                 stage.clear();
-                                String whitePlayer = message.get("inviter"), blackPlayer = message.get("invitee");
-                                int matchID = Integer.parseInt(message.get("matchID"));
+                                String whitePlayer = inviter, blackPlayer = nickname;
+                                int matchID = Integer.parseInt(acceptResult.getSuccess().getMatchID());
                                 parent.setMatchInfo(matchID, whitePlayer, blackPlayer);
                                 parent.changeScreen(OmegaChess.SCREEN.MATCH);
                             }
@@ -292,16 +299,17 @@ public class MailboxScreen implements Screen {
                 }
             }
 
-            receivedMessage = parent.getClient().getNotifications(nickname);
+            Result<NotificationsSuccessResponse> notifResult = parent.getClient().getNotifications(nickname);
 
-            if(receivedMessage.get("success").equals("true")) {
-                count = Integer.parseInt(receivedMessage.get("count"));
-                for (int i = 0; i < count; i++) {
+            if(notifResult.isSuccess()) {
+                java.util.List<NotificationRecord> notifications = notifResult.getSuccess().getNotifications();
+                for (int i = 0; i < notifications.size(); i++) {
                     activeCount++;
-                    String event = receivedMessage.get("event" + (i+1));
+                    NotificationRecord n = notifications.get(i);
+                    String event = n.getEvent();
                     if (!event.equals("INVITE_REQUEST")) {
                         String tmp = String.format("%-" + spacing + "s%-" + spacing + "s",  // format
-                                "Notification", receivedMessage.get("message" + (i+1)));
+                                "Notification", n.getMessage());
 
                         labels.add(new Label(tmp, skin) {
                             public void draw(Batch batch, float parentAlpha) {

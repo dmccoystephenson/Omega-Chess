@@ -11,6 +11,10 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 
+import com.omegaChess.protocol.Result;
+import com.omegaChess.protocol.messages.GameRecordEntry;
+import com.omegaChess.protocol.messages.GameRecordsSuccessResponse;
+
 import javax.swing.*;
 
 public class ArchiveScreen implements Screen {
@@ -62,26 +66,27 @@ public class ArchiveScreen implements Screen {
         archiveTable.row();
         archiveTable.add(new Label(label, skin));
 
-        OCMessage receivedMessage = parent.getClient().getGameRecords(nickname);
+        Result<GameRecordsSuccessResponse> result = parent.getClient().getGameRecords(nickname);
 
         labels.add(new Label("Game History", skin));
         labels.row();
         int activeCount = 1;
 
-        if(receivedMessage.get("success").equals("true"))
+        if(result.isSuccess())
         {
-            int count = Integer.parseInt(receivedMessage.get("number"));
-            for(int i = 0; i < count; i++)
+            java.util.List<GameRecordEntry> records = result.getSuccess().getRecords();
+            for(int i = 0; i < records.size(); i++)
             {
                 activeCount++;
                 String str;
-                String otherPlayer = receivedMessage.get("user" + (i+1));
-                String totalMoves = receivedMessage.get("moves" + (i+1));
-                if( receivedMessage.get("result" + (i+1)).equals("tie"))
+                GameRecordEntry r = records.get(i);
+                String otherPlayer = r.getOpponentNickname();
+                String totalMoves = String.valueOf(r.getMoves());
+                if( r.getResult().equals("tie"))
                 {
                     str = "You and " + otherPlayer + " tied! In " + totalMoves + " moves.";
                 }
-                else if( receivedMessage.get("result" + (i+1)).equals(nickname))
+                else if( r.getResult().equals(nickname))
                 {
                     str = "You won against " + otherPlayer + " in " + totalMoves + " moves.";
                 }

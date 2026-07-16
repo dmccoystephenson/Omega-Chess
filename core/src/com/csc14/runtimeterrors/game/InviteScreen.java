@@ -14,6 +14,9 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import sun.font.TextLabel;
 
+import com.omegaChess.protocol.Result;
+import com.omegaChess.protocol.messages.SimpleSuccessResponse;
+
 import javax.swing.*;
 import java.awt.font.TextLayout;
 
@@ -119,13 +122,13 @@ public class InviteScreen implements Screen {
                 String otherUser = anotherUser.getText();
 
                 // 2. send invite request
-                OCMessage receivedMessage = parent.getClient().sendInviteRequest(parent.getUser(), otherUser);
-                if (receivedMessage.get("success").equals("true")) {
+                Result<SimpleSuccessResponse> result = parent.getClient().sendInviteRequest(parent.getUser(), otherUser);
+                if (result.isSuccess()) {
                     String success = "Invite was sent!";
                     JOptionPane.showMessageDialog(null, success, "Success", JOptionPane.PLAIN_MESSAGE);
                     parent.changeScreen(OmegaChess.SCREEN.LOBBY); // go to login screen if successful
                 } else {
-                    String message = receivedMessage.get("reason").toString();
+                    String message = result.getReason();
                     JOptionPane.showMessageDialog(null, message, "Failed invite", JOptionPane.ERROR_MESSAGE);
                 }
 

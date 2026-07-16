@@ -7,6 +7,10 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Arrays;
 
+import com.omegaChess.protocol.OCCodec;
+import com.omegaChess.protocol.Result;
+import com.omegaChess.protocol.messages.*;
+
 public class OCClient {
 
     private static final String serverHostName = "34.71.50.54"; // in order to test on production, OCMultiServer.java must be running on the server host
@@ -33,30 +37,32 @@ public class OCClient {
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
     }
 
-    private OCMessage sendRequestAndReceiveMessage(OCMessage message) {
-        // send request
-        out.println(message.toString());
+    private <S> Result<S> sendRequestAndReceive(Object request, Class<S> successType) {
+        String xml = OCCodec.encode(request);
+        out.println(xml);
 
-        // receive message
-        OCMessage receivedMessage = new OCMessage();
-
+        String responseXml;
         try {
-            receivedMessage.fromString(in.readLine());
+            responseXml = in.readLine();
         } catch (Exception e) {
             e.printStackTrace();
+            return Result.fail(new FailureResponse("Communication error"));
         }
-        return receivedMessage;
+
+        Object response = OCCodec.decode(responseXml);
+        if (response instanceof FailureResponse) {
+            return Result.fail((FailureResponse) response);
+        }
+        return Result.ok(successType.cast(response));
     }
 
-    private boolean printResult(OCMessage receivedMessage) {
-        String success = receivedMessage.get("success");
-
-        if (success.equals("true")) {
+    private <S> boolean printResult(Result<S> result) {
+        if (result.isSuccess()) {
             System.out.println("Success!");
             return true;
         }
         else {
-            System.out.println(receivedMessage.get("reason"));
+            System.out.println(result.getReason());
             return false;
         }
     }
@@ -66,21 +72,15 @@ public class OCClient {
 
         System.out.println("Sending square request!");
 
-        OCMessage message = new OCMessage();
-        message.put("process", "square");
-        message.put("number", "" + number);
+        SquareRequest request = new SquareRequest(Integer.parseInt(number));
 
-        // receive message
-        OCMessage receivedMessage = sendRequestAndReceiveMessage(message);
+        Result<SquareSuccessResponse> result = sendRequestAndReceive(request, SquareSuccessResponse.class);
 
-        // print answer
-        String success = receivedMessage.get("success");
-
-        if (success.equals("true")) {
-            return receivedMessage.get("answer");
+        if (result.isSuccess()) {
+            return result.getSuccess().getAnswer();
         }
         else {
-            return receivedMessage.get("reason");
+            return result.getReason();
         }
 
     }
@@ -90,297 +90,242 @@ public class OCClient {
 
         System.out.println("Sending register request for " + nickname + "!");
 
-        OCMessage message = new OCMessage();
-        message.put("process", "register");
-        message.put("email", email);
-        message.put("nickname", nickname);
-        message.put("password", password);
+        RegisterRequest request = new RegisterRequest(email, nickname, password);
 
-        // receive message
-        OCMessage receivedMessage = sendRequestAndReceiveMessage(message);
+        Result<SimpleSuccessResponse> result = sendRequestAndReceive(request, SimpleSuccessResponse.class);
 
-        return printResult(receivedMessage);
+        return printResult(result);
     }
 
     // unregister request
     public boolean sendUnregisterRequest(String nickname) {
         System.out.println("Sending unregister request for " + nickname + "!");
 
-        OCMessage message = new OCMessage();
-        message.put("process", "unregister");
-        message.put("nickname", nickname);
+        UnregisterRequest request = new UnregisterRequest(nickname);
 
-        // receive message
-        OCMessage receivedMessage = sendRequestAndReceiveMessage(message);
+        Result<SimpleSuccessResponse> result = sendRequestAndReceive(request, SimpleSuccessResponse.class);
 
-        return printResult(receivedMessage);
+        return printResult(result);
     }
 
     // login request
-    public OCMessage sendLoginRequest(String nickname, String password) {
+    public Result<SimpleSuccessResponse> sendLoginRequest(String nickname, String password) {
         System.out.println("Sending login request for " + nickname + "!");
 
-        OCMessage message = new OCMessage();
-        message.put("process", "login");
-        message.put("nickname", nickname);
-        message.put("password", password);
+        LoginRequest request = new LoginRequest(nickname, password);
 
-        // receive message
-        OCMessage receivedMessage = sendRequestAndReceiveMessage(message);
+        Result<SimpleSuccessResponse> result = sendRequestAndReceive(request, SimpleSuccessResponse.class);
 
-        printResult(receivedMessage);
+        printResult(result);
 
-        return receivedMessage;
+        return result;
     }
 
     // get profile data request
-    public OCMessage sendGetProfileDataRequest(String nickname) {
+    public Result<ProfileDataSuccessResponse> sendGetProfileDataRequest(String nickname) {
         System.out.println("Sending get profile data request for " + nickname + "!");
 
-        OCMessage message = new OCMessage();
-        message.put("process", "get profile data");
-        message.put("nickname", nickname);
+        GetProfileDataRequest request = new GetProfileDataRequest(nickname);
 
-        // receive message
-        OCMessage receivedMessage = sendRequestAndReceiveMessage(message);
+        Result<ProfileDataSuccessResponse> result = sendRequestAndReceive(request, ProfileDataSuccessResponse.class);
 
-        printResult(receivedMessage);
+        printResult(result);
 
-        return receivedMessage;
+        return result;
     }
 
     // send invite request
-    public OCMessage sendInviteRequest(String inviter, String invitee){
+    public Result<SimpleSuccessResponse> sendInviteRequest(String inviter, String invitee){
         System.out.println("Sending invite request from " + inviter + " to " + invitee + "!");
 
-        OCMessage message = new OCMessage();
-        message.put("process", "invite");
-        message.put("invitee", invitee.toLowerCase());
-        message.put("inviter", inviter.toLowerCase());
+        SendInviteRequest request = new SendInviteRequest(inviter.toLowerCase(), invitee.toLowerCase());
 
-        // send and receive results
-        OCMessage receivedMessage = sendRequestAndReceiveMessage(message);
+        Result<SimpleSuccessResponse> result = sendRequestAndReceive(request, SimpleSuccessResponse.class);
 
-        printResult(receivedMessage);
+        printResult(result);
 
-        return receivedMessage;
+        return result;
 
     }
 
     // get sent invites request
-    public OCMessage getSentInvites(String user){
+    public Result<InviteListSuccessResponse> getSentInvites(String user){
         System.out.println("Sending request to get sent invites from mailbox!");
 
-        OCMessage message = new OCMessage();
-        message.put("process", "invites sent");
-        message.put("user", user);
+        GetInvitesSentRequest request = new GetInvitesSentRequest(user);
 
         // Send and receive results
-        OCMessage receivedMessage = sendRequestAndReceiveMessage(message);
+        Result<InviteListSuccessResponse> result = sendRequestAndReceive(request, InviteListSuccessResponse.class);
 
-        printResult(receivedMessage);
+        printResult(result);
 
-        return receivedMessage;
+        return result;
     }
 
     // get received invites request
-    public OCMessage getReceivedInvites(String user){
+    public Result<InviteListSuccessResponse> getReceivedInvites(String user){
         System.out.println("Sending request to get received invites from mailbox!");
 
-        OCMessage message = new OCMessage();
-        message.put("process", "invites received");
-        message.put("user", user);
+        GetInvitesReceivedRequest request = new GetInvitesReceivedRequest(user);
 
         // Send and receive results
-        OCMessage receivedMessage = sendRequestAndReceiveMessage(message);
+        Result<InviteListSuccessResponse> result = sendRequestAndReceive(request, InviteListSuccessResponse.class);
 
-        printResult(receivedMessage);
+        printResult(result);
 
-        return receivedMessage;
+        return result;
     }
 
     // get notifications request
-    public OCMessage getNotifications(String nickname) {
+    public Result<NotificationsSuccessResponse> getNotifications(String nickname) {
         System.out.println("Sending request to get notifications from mailbox for user: " + nickname);
 
-        OCMessage message = new OCMessage();
-        message.put("process", "get notifications");
-        message.put("nickname", nickname);
+        GetNotificationsRequest request = new GetNotificationsRequest(nickname);
 
         // Send and receive results
-        OCMessage receivedMessage = sendRequestAndReceiveMessage(message);
+        Result<NotificationsSuccessResponse> result = sendRequestAndReceive(request, NotificationsSuccessResponse.class);
 
-        printResult(receivedMessage);
+        printResult(result);
 
-        return receivedMessage;
+        return result;
     }
 
 
     // get legal moves request
-    public OCMessage getLegalMoves(int matchID, int[] position) {
+    public Result<LegalMovesSuccessResponse> getLegalMoves(int matchID, int[] position) {
         System.out.println("Sending request to get legal moves for matchID: " + matchID + " and piece at position: " + position[0] + "," + position[1]);
 
-        OCMessage message = new OCMessage();
-        message.put("process", "get legal moves");
-        message.put("matchID", Integer.toString(matchID));
-        message.put("row", Integer.toString(position[0]));
-        message.put("column", Integer.toString(position[1]));
+        GetLegalMovesRequest request = new GetLegalMovesRequest(matchID, position[0], position[1]);
 
         // Send and receive results
-        OCMessage receivedMessage = sendRequestAndReceiveMessage(message);
+        Result<LegalMovesSuccessResponse> result = sendRequestAndReceive(request, LegalMovesSuccessResponse.class);
 
-        printResult(receivedMessage);
+        printResult(result);
 
-        return receivedMessage;
+        return result;
     }
 
     // Accept an invite from another user
-    public OCMessage acceptInvite(String user, String inviter){
+    public Result<InviteResponseSuccessResponse> acceptInvite(String user, String inviter){
         System.out.println("Accepting an invitation from " + inviter);
-        OCMessage message = new OCMessage();
-        message.put("process", "invite response");
-        message.put("response", "accept");
-        message.put("inviter", inviter);
-        message.put("invitee", user);
 
-        OCMessage receivedMessage = sendRequestAndReceiveMessage(message);
+        InviteResponseRequest request = new InviteResponseRequest("accept", inviter, user);
 
-        printResult(receivedMessage);
+        Result<InviteResponseSuccessResponse> result = sendRequestAndReceive(request, InviteResponseSuccessResponse.class);
 
-        return receivedMessage;
+        printResult(result);
+
+        return result;
     }
 
     // Decline an invite from another user
-    public OCMessage declineInvite(String user, String inviter){
+    public Result<SimpleSuccessResponse> declineInvite(String user, String inviter){
         System.out.println("Accepting an invitation from " + inviter);
-        OCMessage message = new OCMessage();
-        message.put("process", "invite response");
-        message.put("response", "decline");
-        message.put("inviter", inviter);
-        message.put("invitee", user);
 
-        OCMessage receivedMessage = sendRequestAndReceiveMessage(message);
+        InviteResponseRequest request = new InviteResponseRequest("decline", inviter, user);
 
-        printResult(receivedMessage);
+        Result<SimpleSuccessResponse> result = sendRequestAndReceive(request, SimpleSuccessResponse.class);
 
-        return receivedMessage;
+        printResult(result);
+
+        return result;
     }
 
     // Get board data from server for a match
-    public OCMessage getBoardData(int ID){
+    public Result<BoardDataSuccessResponse> getBoardData(int ID){
         //System.out.println("Getting board data for match with ID="+ID);
-        OCMessage message = new OCMessage();
-        message.put("process", "get board data");
-        message.put("ID", String.valueOf(ID));
 
-        OCMessage receivedMessage = sendRequestAndReceiveMessage(message);
+        GetBoardDataRequest request = new GetBoardDataRequest(ID);
 
-        //printResult(receivedMessage);
+        Result<BoardDataSuccessResponse> result = sendRequestAndReceive(request, BoardDataSuccessResponse.class);
 
-        return receivedMessage;
+        //printResult(result);
+
+        return result;
     }
 
     // send move to be made on the server
-    public OCMessage matchMove(int matchID, int[] fromPosition, int[] toPosition){
+    public Result<SimpleSuccessResponse> matchMove(int matchID, int[] fromPosition, int[] toPosition){
         System.out.println("Sending move from "+ Arrays.toString(fromPosition) +" to "+ Arrays.toString(toPosition) +" to the server");
-        OCMessage message = new OCMessage();
-        message.put("process", "match move");
-        message.put("matchID", Integer.toString(matchID));
-        message.put("fromRow", Integer.toString(fromPosition[0]));
-        message.put("fromColumn", Integer.toString(fromPosition[1]));
-        message.put("toRow", Integer.toString(toPosition[0]));
-        message.put("toColumn", Integer.toString(toPosition[1]));
+
+        MatchMoveRequest request = new MatchMoveRequest(matchID, fromPosition[0], fromPosition[1], toPosition[0], toPosition[1]);
 
         // receive message
-        OCMessage receivedMessage = sendRequestAndReceiveMessage(message);
+        Result<SimpleSuccessResponse> result = sendRequestAndReceive(request, SimpleSuccessResponse.class);
 
-        printResult(receivedMessage);
+        printResult(result);
 
-        return receivedMessage;
+        return result;
     }
 
     // request the matches a user can resume
-    public OCMessage getResumeMatches(String nickname) {
+    public Result<InProgressMatchesSuccessResponse> getResumeMatches(String nickname) {
         System.out.println("Sending get in-progress matches request for " + nickname);
 
-        OCMessage message = new OCMessage();
-        message.put("process", "get in-progress matches");
-        message.put("nickname", nickname);
+        GetInProgressMatchesRequest request = new GetInProgressMatchesRequest(nickname);
 
         // receive message
-        OCMessage receivedMessage = sendRequestAndReceiveMessage(message);
+        Result<InProgressMatchesSuccessResponse> result = sendRequestAndReceive(request, InProgressMatchesSuccessResponse.class);
 
-        printResult(receivedMessage);
+        printResult(result);
 
-        return receivedMessage;
+        return result;
     }
 
     // Get current turn
-    public OCMessage getTurn(int ID){
+    public Result<TurnSuccessResponse> getTurn(int ID){
 
-        OCMessage message = new OCMessage();
-        message.put("process", "get turn");
-        message.put("ID", String.valueOf(ID));
+        GetTurnRequest request = new GetTurnRequest(ID);
 
         // Received message
-        OCMessage receivedMessage = sendRequestAndReceiveMessage(message);
+        Result<TurnSuccessResponse> result = sendRequestAndReceive(request, TurnSuccessResponse.class);
 
-        printResult(receivedMessage);
+        printResult(result);
 
-        return receivedMessage;
+        return result;
     }
 
     // End match
-    public OCMessage endMatch(int ID, String winner, String loser){
-        OCMessage message = new OCMessage(), receivedMessage;
-        message.put("process", "end match");
-        message.put("ID", String.valueOf(ID));
-        message.put("winner", winner);
-        message.put("loser", loser);
+    public Result<EndMatchSuccessResponse> endMatch(int ID, String winner, String loser){
+        EndMatchRequest request = new EndMatchRequest(ID, winner, loser);
 
-        receivedMessage = sendRequestAndReceiveMessage(message);
+        Result<EndMatchSuccessResponse> result = sendRequestAndReceive(request, EndMatchSuccessResponse.class);
 
-        printResult(receivedMessage);
+        printResult(result);
 
-        return receivedMessage;
+        return result;
     }
 
     // get game records
-    public OCMessage getGameRecords(String nickname){
-        OCMessage message = new OCMessage(), receivedMessage;
-        message.put("process", "get game records");
-        message.put("user", nickname);
+    public Result<GameRecordsSuccessResponse> getGameRecords(String nickname){
+        GetGameRecordsRequest request = new GetGameRecordsRequest(nickname);
 
-        receivedMessage = sendRequestAndReceiveMessage(message);
+        Result<GameRecordsSuccessResponse> result = sendRequestAndReceive(request, GameRecordsSuccessResponse.class);
 
-        printResult(receivedMessage);
+        printResult(result);
 
-        return receivedMessage;
+        return result;
     }
 
     // request checkmate check
-    public OCMessage getCheckmate(int matchID) {
-        OCMessage message = new OCMessage(), receivedMessage;
-        message.put("process", "checkmate check");
-        message.put("ID", String.valueOf(matchID));
+    public Result<CheckmateSuccessResponse> getCheckmate(int matchID) {
+        CheckCheckmateRequest request = new CheckCheckmateRequest(matchID);
 
-        receivedMessage = sendRequestAndReceiveMessage(message);
+        Result<CheckmateSuccessResponse> result = sendRequestAndReceive(request, CheckmateSuccessResponse.class);
 
-        printResult(receivedMessage);
+        printResult(result);
 
-        return receivedMessage;
+        return result;
     }
 
     // request forfeit check
-    public OCMessage getForfeit(int matchID) {
-        OCMessage message = new OCMessage(), receivedMessage;
-        message.put("process", "forfeit check");
-        message.put("ID", String.valueOf(matchID));
+    public Result<ForfeitSuccessResponse> getForfeit(int matchID) {
+        CheckForfeitRequest request = new CheckForfeitRequest(matchID);
 
-        receivedMessage = sendRequestAndReceiveMessage(message);
+        Result<ForfeitSuccessResponse> result = sendRequestAndReceive(request, ForfeitSuccessResponse.class);
 
-        printResult(receivedMessage);
+        printResult(result);
 
-        return receivedMessage;
+        return result;
     }
 }

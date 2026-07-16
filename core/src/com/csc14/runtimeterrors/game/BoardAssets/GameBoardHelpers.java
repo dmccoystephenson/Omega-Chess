@@ -1,14 +1,11 @@
 package com.csc14.runtimeterrors.game.BoardAssets;
 
-import com.csc14.runtimeterrors.game.OCMessage;
-
 import java.util.*;
 
 public class GameBoardHelpers {
     // helper to parse list of legal moves from server
-    public static List<String> parseLegalMoves(OCMessage message) {
-        System.out.println("List of legal moves received: " + message.get("legal moves"));
-        String moveList = message.get("legal moves");
+    public static List<String> parseLegalMoves(String moveList) {
+        System.out.println("List of legal moves received: " + moveList);
 
         if ((moveList == null) || (moveList.equals("/"))) {
             return new ArrayList<>();
